@@ -5,18 +5,9 @@ import Link from "next/link";
 import { FileSignature } from "lucide-react";
 
 import { Header } from "@/components/layout/header";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Pagination } from "@/components/shared/pagination";
+import { DataTable } from "@/components/shared/data-table";
+import { FilterBar } from "@/components/shared/filter-bar";
 import { ContractDialog } from "@/components/contracts/contract-dialog";
 import { useEmployees, usePaginatedContracts } from "@/hooks/useEmployees";
 
@@ -51,66 +42,79 @@ export default function ContractsPage() {
       <Header
         title="Contracts"
         description="Every employment term, historized — payroll only ever uses the one active for its period."
-        actions={<ContractDialog onCreated={() => { setPage(1); reload(); }} />}
+        actions={
+          <ContractDialog
+            onCreated={() => {
+              setPage(1);
+              reload();
+            }}
+          />
+        }
       />
 
       <div className="flex-1 space-y-4 p-4 sm:p-6">
-        {error && <ErrorBanner message={error} />}
-        {loading ? (
-          <LoadingBanner label="Loading contracts…" />
-        ) : contracts.length === 0 ? (
-          <EmptyState
-            icon={FileSignature}
-            title="No contracts yet"
-            description="Create the first employment contract for an employee."
-          />
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Contract #</TableHead>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Start</TableHead>
-                  <TableHead>End</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Base salary</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contracts.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">
-                      <Link href={`/dashboard/contracts/${c.id}`}>
-                        {c.contract_number}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{employeeName(c.employee_id)}</TableCell>
-                    <TableCell>{c.start_date}</TableCell>
-                    <TableCell>{c.end_date ?? "Open-ended"}</TableCell>
-                    <TableCell className="capitalize text-muted-foreground">
-                      {c.contract_type.replaceAll("_", " ").toLowerCase()}
-                    </TableCell>
-                    <TableCell>{money(c.base_salary, c.currency)}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={c.status} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {contractPage && (
-              <Pagination
-                page={contractPage.page}
-                pageSize={contractPage.page_size}
-                total={contractPage.total}
-                pages={contractPage.pages}
-                onPageChange={setPage}
-              />
-            )}
-          </div>
-        )}
+        <FilterBar />
+        <DataTable
+          rows={contracts}
+          rowKey={(contract) => contract.id}
+          loading={loading}
+          error={error}
+          emptyIcon={FileSignature}
+          emptyTitle="No contracts yet"
+          emptyDescription="Create the first employment contract for an employee."
+          page={contractPage?.page}
+          pageSize={contractPage?.page_size}
+          total={contractPage?.total}
+          pages={contractPage?.pages}
+          onPageChange={setPage}
+          columns={[
+            {
+              key: "number",
+              header: "Contract #",
+              render: (contract) => (
+                <Link
+                  href={`/dashboard/contracts/${contract.id}`}
+                  className="font-medium"
+                >
+                  {contract.contract_number}
+                </Link>
+              ),
+            },
+            {
+              key: "employee",
+              header: "Employee",
+              render: (contract) => employeeName(contract.employee_id),
+            },
+            {
+              key: "start",
+              header: "Start",
+              render: (contract) => contract.start_date,
+            },
+            {
+              key: "end",
+              header: "End",
+              render: (contract) => contract.end_date ?? "Open-ended",
+            },
+            {
+              key: "type",
+              header: "Type",
+              className: "capitalize text-muted-foreground",
+              render: (contract) =>
+                contract.contract_type.replaceAll("_", " ").toLowerCase(),
+            },
+            {
+              key: "salary",
+              header: "Base salary",
+              render: (contract) =>
+                money(contract.base_salary, contract.currency),
+            },
+            {
+              key: "status",
+              header: "Status",
+              render: (contract) => <StatusBadge status={contract.status} />,
+            },
+          ]}
+        />
       </div>
     </div>
   );

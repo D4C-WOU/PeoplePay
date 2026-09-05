@@ -1,38 +1,52 @@
 @import "tailwindcss";
 
+/* ============================================================
+   PeoplePay360 — Design System v2
+   A warmer, more modern "fintech-meets-HR" palette with
+   softer shadows, larger radii, and a single accent gradient.
+   ============================================================ */
+
 :root {
-  --font-inter: "Inter", sans-serif;
-  
-  /* PeoplePay360 brand palette */
-  --pp-brand: #714b67;        /* Odoo-style aubergine */
-  --pp-brand-dark: #5c3a54;
-  --pp-brand-light: #e8dde6;
-  --pp-accent: #017e84;       /* Teal accent */
-  --pp-accent-light: #d4f0f2;
-  
+  --font-sans: "Inter", "Segoe UI", system-ui, sans-serif;
+
+  /* Brand */
+  --pp-brand: #4f46e5;
+  --pp-brand-dark: #3730a3;
+  --pp-brand-light: #eef2ff;
+  --pp-accent: #f97316;
+  --pp-accent-light: #fff3e8;
+
+  /* Sidebar */
+  --pp-sidebar-bg: #0f1222;
+  --pp-sidebar-bg-2: #171a30;
+  --pp-sidebar-fg: #9ca3d4;
+  --pp-sidebar-active: #4f46e5;
+  --pp-sidebar-hover: #22254a;
+  --pp-sidebar-border: rgba(255, 255, 255, 0.06);
+
   /* Surfaces */
-  --pp-sidebar-bg: #2c2c2c;
-  --pp-sidebar-fg: #c8c8c8;
-  --pp-sidebar-active: #714b67;
-  --pp-sidebar-hover: #3a3a3a;
-  --pp-topbar-bg: #ffffff;
-  --pp-page-bg: #f4f4f4;
+  --pp-page-bg: #f6f7fb;
   --pp-card-bg: #ffffff;
-  
-  /* Status colors */
-  --pp-success: #28a745;
-  --pp-success-bg: #d4edda;
-  --pp-warning: #ffc107;
-  --pp-warning-bg: #fff3cd;
-  --pp-danger: #dc3545;
-  --pp-danger-bg: #f8d7da;
-  --pp-info: #17a2b8;
-  --pp-info-bg: #d1ecf1;
-  
-  /* Borders & shadows */
-  --pp-border: #e0e0e0;
-  --pp-shadow-sm: 0 1px 3px rgba(0,0,0,.08);
-  --pp-shadow: 0 2px 8px rgba(0,0,0,.10);
+  --pp-border: #e6e8f0;
+  --pp-border-strong: #d7dae6;
+
+  /* Status */
+  --pp-success: #059669;
+  --pp-success-bg: #ecfdf5;
+  --pp-warning: #b45309;
+  --pp-warning-bg: #fffbeb;
+  --pp-danger: #dc2626;
+  --pp-danger-bg: #fef2f2;
+  --pp-info: #2563eb;
+  --pp-info-bg: #eff6ff;
+
+  /* Elevation */
+  --pp-shadow-xs: 0 1px 2px rgba(15, 18, 34, 0.04);
+  --pp-shadow-sm: 0 2px 6px rgba(15, 18, 34, 0.06);
+  --pp-shadow: 0 12px 32px rgba(15, 18, 34, 0.10);
+
+  --pp-radius: 14px;
+  --pp-radius-sm: 10px;
 }
 
 * {
@@ -42,113 +56,75 @@
 }
 
 body {
-  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   font-size: 14px;
-  line-height: 1.5;
-  color: #2c2c2c;
+  line-height: 1.55;
+  color: #1c1f2e;
+  background: var(--pp-page-bg);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #aaa; }
+::selection {
+  color: white;
+  background: var(--pp-brand);
+}
 
-/* Focus ring */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cfd3e4; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #b6bad4; }
+
 :focus-visible {
   outline: 2px solid var(--pp-brand);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Animate page transitions */
-.page-enter { animation: fadeSlideIn 0.18s ease-out; }
-
+.page-enter { animation: fadeSlideIn 0.22s ease-out; }
 @keyframes fadeSlideIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Table utilities */
-.pp-table-row:hover { background: #fafafa; }
+/* Accent strip used on headers */
+.pp-accent-strip {
+  background: linear-gradient(90deg, var(--pp-brand), var(--pp-accent));
+}
 
-/* Badge utilities */
+/* Surfaces (cards, tables) */
+.app-surface {
+  background: var(--pp-card-bg);
+  border: 1px solid var(--pp-border);
+  border-radius: var(--pp-radius);
+  box-shadow: var(--pp-shadow-xs);
+}
+
+.app-scrollbar {
+  scrollbar-color: #cfd3e4 transparent;
+  scrollbar-width: thin;
+}
+
+/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 100px;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
   font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-/* Kanban card */
-.kanban-card {
-  background: white;
-  border: 1px solid var(--pp-border);
-  border-radius: 6px;
-  padding: 12px;
-  box-shadow: var(--pp-shadow-sm);
-  transition: box-shadow 0.15s;
-  cursor: pointer;
+button, a, input, select, textarea {
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
 }
-.kanban-card:hover { box-shadow: var(--pp-shadow); }
 
-/* Odoo-style button */
-.btn-primary {
-  background: var(--pp-brand);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.15s;
-}
-.btn-primary:hover { background: var(--pp-brand-dark); }
-
-.btn-secondary {
-  background: white;
-  color: var(--pp-brand);
-  border: 1px solid var(--pp-brand);
-  border-radius: 4px;
-  padding: 6px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.15s;
-}
-.btn-secondary:hover { background: var(--pp-brand-light); }
-
-/* Form fields */
-.field-group { margin-bottom: 16px; }
-.field-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b6b6b;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.field-input {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid var(--pp-border);
-  border-radius: 4px;
-  font-size: 13px;
-  background: white;
-  transition: border-color 0.15s;
-}
-.field-input:focus {
-  outline: none;
-  border-color: var(--pp-brand);
+@media (max-width: 767px) {
+  body { font-size: 13px; }
 }

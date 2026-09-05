@@ -18,17 +18,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
-import { EmptyState } from "@/components/shared/empty-state";
+import { DataTable } from "@/components/shared/data-table";
 import { useSalaryStructures, salaryStructureApi } from "@/hooks/usePayroll";
 import { ApiError } from "@/lib/api";
 
@@ -145,55 +136,57 @@ export default function SalaryStructuresPage() {
         actions={<NewStructureDialog onCreated={reload} />}
       />
       <div className="flex-1 space-y-4 p-4 sm:p-6">
-        {error && <ErrorBanner message={error} />}
-        {loading ? (
-          <LoadingBanner label="Loading salary structures…" />
-        ) : !structures || structures.length === 0 ? (
-          <EmptyState
-            icon={Wallet}
-            title="No salary structures yet"
-            description="Create a structure, then add salary rules to it."
-          />
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Currency</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {structures.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-mono text-xs">
-                      {s.code}
-                    </TableCell>
-                    <TableCell className="font-medium">{s.name}</TableCell>
-                    <TableCell>{s.currency}</TableCell>
-                    <TableCell>
-                      <Badge variant={s.is_active ? "default" : "secondary"}>
-                        {s.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/dashboard/salary/rules?structure_id=${s.id}`}
-                        className="text-sm underline-offset-2 hover:underline"
-                        style={{ color: "var(--pp-brand)" }}
-                      >
-                        View rules →
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <DataTable
+          rows={structures ?? []}
+          rowKey={(structure) => structure.id}
+          loading={loading}
+          error={error}
+          emptyIcon={Wallet}
+          emptyTitle="No salary structures yet"
+          emptyDescription="Create a structure, then add salary rules to it."
+          columns={[
+            {
+              key: "code",
+              header: "Code",
+              className: "font-mono text-xs",
+              render: (structure) => structure.code,
+            },
+            {
+              key: "name",
+              header: "Name",
+              render: (structure) => (
+                <span className="font-medium">{structure.name}</span>
+              ),
+            },
+            {
+              key: "currency",
+              header: "Currency",
+              render: (structure) => structure.currency,
+            },
+            {
+              key: "status",
+              header: "Status",
+              render: (structure) => (
+                <Badge variant={structure.is_active ? "default" : "secondary"}>
+                  {structure.is_active ? "Active" : "Inactive"}
+                </Badge>
+              ),
+            },
+            {
+              key: "rules",
+              header: "Rules",
+              render: (structure) => (
+                <Link
+                  href={`/dashboard/salary/rules?structure_id=${structure.id}`}
+                  className="text-sm underline-offset-2 hover:underline"
+                  style={{ color: "var(--pp-brand)" }}
+                >
+                  View rules →
+                </Link>
+              ),
+            },
+          ]}
+        />
       </div>
     </div>
   );

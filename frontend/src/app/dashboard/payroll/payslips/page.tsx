@@ -28,9 +28,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Pagination } from "@/components/shared/pagination";
+import { DataTable } from "@/components/shared/data-table";
+import { FilterBar } from "@/components/shared/filter-bar";
+import { LoadingBanner } from "@/components/shared/state-banner";
 import { usePaginatedPayslips, payslipApi } from "@/hooks/usePayroll";
 import { ApiError } from "@/lib/api";
 import type { Payslip } from "@/types/payroll";
@@ -172,8 +172,7 @@ function PayslipsContent() {
   });
   const payslips = payslipPage?.items ?? [];
 
-  const shown =
-    activePayslip ?? payslips.find((p) => p.id === preselected);
+  const shown = activePayslip ?? payslips.find((p) => p.id === preselected);
 
   function updateStatus(value: string) {
     setStatus(value);
@@ -187,76 +186,68 @@ function PayslipsContent() {
         description="Every generated payslip, with a full component breakdown."
       />
       <div className="flex-1 space-y-4 p-4 sm:p-6">
-        <Select value={status} onValueChange={updateStatus}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="DRAFT">Draft</SelectItem>
-            <SelectItem value="FINALIZED">Finalized</SelectItem>
-            <SelectItem value="PAID">Paid</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+        <FilterBar
+          hasActiveFilters={status !== "all"}
+          onClear={() => updateStatus("all")}
+        >
+          <Select value={status} onValueChange={updateStatus}>
+            <SelectTrigger className="w-44 bg-white">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="DRAFT">Draft</SelectItem>
+              <SelectItem value="FINALIZED">Finalized</SelectItem>
+              <SelectItem value="PAID">Paid</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterBar>
 
-        {error && <ErrorBanner message={error} />}
-        {loading ? (
-          <LoadingBanner label="Loading payslips…" />
-        ) : payslips.length === 0 ? (
-          <EmptyState
-            icon={Receipt}
-            title="No payslips yet"
-            description="Payslips appear here once a pay run has been computed."
-          />
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Gross</TableHead>
-                  <TableHead>Net</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payslips.map((slip) => (
-                  <TableRow
-                    key={slip.id}
-                    className="cursor-pointer"
-                    onClick={() => setActivePayslip(slip)}
-                  >
-                    <TableCell>
-                      {slip.employee_name}{" "}
-                      <span className="text-xs text-muted-foreground">
-                        {slip.employee_number}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {money(Number(slip.gross_amount), slip.currency)}
-                    </TableCell>
-                    <TableCell>
-                      {money(Number(slip.net_amount), slip.currency)}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={slip.status} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {payslipPage && (
-              <Pagination
-                page={payslipPage.page}
-                pageSize={payslipPage.page_size}
-                total={payslipPage.total}
-                pages={payslipPage.pages}
-                onPageChange={setPage}
-              />
-            )}
-          </div>
-        )}
+        <DataTable
+          rows={payslips}
+          rowKey={(slip) => slip.id}
+          loading={loading}
+          error={error}
+          emptyIcon={Receipt}
+          emptyTitle="No payslips yet"
+          emptyDescription="Payslips appear here once a pay run has been computed."
+          page={payslipPage?.page}
+          pageSize={payslipPage?.page_size}
+          total={payslipPage?.total}
+          pages={payslipPage?.pages}
+          onPageChange={setPage}
+          onRowClick={setActivePayslip}
+          columns={[
+            {
+              key: "employee",
+              header: "Employee",
+              render: (slip) => (
+                <>
+                  <span className="font-medium">{slip.employee_name}</span>{" "}
+                  <span className="text-xs text-muted-foreground">
+                    {slip.employee_number}
+                  </span>
+                </>
+              ),
+            },
+            {
+              key: "gross",
+              header: "Gross",
+              render: (slip) => money(Number(slip.gross_amount), slip.currency),
+            },
+            {
+              key: "net",
+              header: "Net",
+              render: (slip) => money(Number(slip.net_amount), slip.currency),
+            },
+            {
+              key: "status",
+              header: "Status",
+              render: (slip) => <StatusBadge status={slip.status} />,
+            },
+          ]}
+        />
       </div>
 
       {shown && (

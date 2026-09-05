@@ -24,20 +24,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Pagination } from "@/components/shared/pagination";
-import { usePaginatedPayruns, useSalaryStructures, payrunApi } from "@/hooks/usePayroll";
+import { DataTable } from "@/components/shared/data-table";
+import { FilterBar } from "@/components/shared/filter-bar";
+import {
+  usePaginatedPayruns,
+  useSalaryStructures,
+  payrunApi,
+} from "@/hooks/usePayroll";
 import { useEmployees } from "@/hooks/useEmployees";
 import { ApiError } from "@/lib/api";
 
@@ -294,74 +289,82 @@ export default function PayrunsPage() {
       <Header
         title="Pay Runs"
         description="Select employees explicitly — the payrun contains only who you choose."
-        actions={<NewPayrunWizard onCreated={() => { setPage(1); reload(); }} />}
+        actions={
+          <NewPayrunWizard
+            onCreated={() => {
+              setPage(1);
+              reload();
+            }}
+          />
+        }
       />
       <div className="flex-1 space-y-4 p-4 sm:p-6">
-        <Select value={status} onValueChange={updateStatus}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="DRAFT">Draft</SelectItem>
-            <SelectItem value="PROCESSING">Processing</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {error && <ErrorBanner message={error} />}
-        {loading ? (
-          <LoadingBanner label="Loading pay runs…" />
-        ) : payruns.length === 0 ? (
-          <EmptyState
-            icon={PlayCircle}
-            title="No pay runs yet"
-            description="Start a new pay run to compute payslips for a period."
-          />
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Period</TableHead>
-                  <TableHead>Payment date</TableHead>
-                  <TableHead>Employees</TableHead>
-                  <TableHead>Net</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payruns.map((run) => (
-                  <TableRow key={run.id} className="cursor-pointer">
-                    <TableCell>
-                      <Link href={`/dashboard/payroll/payruns/${run.id}`}>
-                        {run.period_start} → {run.period_end}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {run.payment_date ?? "—"}
-                    </TableCell>
-                    <TableCell>{run.employee_count}</TableCell>
-                    <TableCell>{money(Number(run.total_net))}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={run.status} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {payrunPage && (
-              <Pagination
-                page={payrunPage.page}
-                pageSize={payrunPage.page_size}
-                total={payrunPage.total}
-                pages={payrunPage.pages}
-                onPageChange={setPage}
-              />
-            )}
-          </div>
-        )}
+        <FilterBar
+          hasActiveFilters={status !== "all"}
+          onClear={() => updateStatus("all")}
+        >
+          <Select value={status} onValueChange={updateStatus}>
+            <SelectTrigger className="w-44 bg-white">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="DRAFT">Draft</SelectItem>
+              <SelectItem value="PROCESSING">Processing</SelectItem>
+              <SelectItem value="COMPLETED">Completed</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterBar>
+        <DataTable
+          rows={payruns}
+          rowKey={(run) => run.id}
+          loading={loading}
+          error={error}
+          emptyIcon={PlayCircle}
+          emptyTitle="No pay runs yet"
+          emptyDescription="Start a new pay run to compute payslips for a period."
+          page={payrunPage?.page}
+          pageSize={payrunPage?.page_size}
+          total={payrunPage?.total}
+          pages={payrunPage?.pages}
+          onPageChange={setPage}
+          columns={[
+            {
+              key: "period",
+              header: "Period",
+              render: (run) => (
+                <Link
+                  href={`/dashboard/payroll/payruns/${run.id}`}
+                  className="font-medium"
+                >
+                  {run.period_start} → {run.period_end}
+                </Link>
+              ),
+            },
+            {
+              key: "payment",
+              header: "Payment date",
+              className: "text-muted-foreground",
+              render: (run) => run.payment_date ?? "—",
+            },
+            {
+              key: "employees",
+              header: "Employees",
+              render: (run) => run.employee_count,
+            },
+            {
+              key: "net",
+              header: "Net",
+              render: (run) => money(Number(run.total_net)),
+            },
+            {
+              key: "status",
+              header: "Status",
+              render: (run) => <StatusBadge status={run.status} />,
+            },
+          ]}
+        />
       </div>
     </div>
   );

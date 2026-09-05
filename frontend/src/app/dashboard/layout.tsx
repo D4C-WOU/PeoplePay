@@ -1,221 +1,167 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { ROLE_LABELS, canAccessHR, canAccessPayroll } from "@/lib/auth";
+import {
+  Menu,
+  X,
+  LogOut,
+  ChevronRight,
+  Bell,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Search,
+  LayoutGrid,
+  Users2,
+  FileSignature,
+  Building2,
+  Clock4,
+  CalendarDays,
+  CalendarClock,
+  Wallet,
+  BarChart3,
+  Settings as SettingsIcon,
+  ShieldCheck,
+} from "lucide-react";
 
 const NAV_ITEMS = [
   {
+    group: "People",
     label: "Overview",
     href: "/dashboard",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <rect x="3" y="3" width="7" height="7" />
-        <rect x="14" y="3" width="7" height="7" />
-        <rect x="14" y="14" width="7" height="7" />
-        <rect x="3" y="14" width="7" height="7" />
-      </svg>
-    ),
+    icon: LayoutGrid,
     exact: true,
   },
   {
+    group: "People",
     label: "Employees",
     href: "/dashboard/employees",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-        <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-      </svg>
-    ),
+    icon: Users2,
   },
   {
+    group: "People",
     label: "Contracts",
     href: "/dashboard/contracts",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-        <polyline points="10 9 9 9 8 9" />
-      </svg>
-    ),
+    icon: FileSignature,
   },
   {
+    group: "People",
+    label: "Departments",
+    href: "/dashboard/departments",
+    icon: Building2,
+  },
+  {
+    group: "Time & attendance",
     label: "Attendance",
     href: "/dashboard/attendance",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-    ),
+    icon: Clock4,
   },
   {
+    group: "Time & attendance",
     label: "Time Off",
     href: "/dashboard/time-off",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <polyline points="12 6 12 12 16 14" />
-      </svg>
-    ),
+    icon: CalendarDays,
   },
   {
+    group: "Time & attendance",
+    label: "Work Schedules",
+    href: "/dashboard/work-schedules",
+    icon: CalendarClock,
+  },
+  {
+    group: "Payroll",
     label: "Payroll",
     href: "/dashboard/payroll",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <line x1="12" y1="1" x2="12" y2="23" />
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-      </svg>
-    ),
+    icon: Wallet,
     children: [
       { label: "Pay Runs", href: "/dashboard/payroll/payruns" },
       { label: "Payslips", href: "/dashboard/payroll/payslips" },
     ],
   },
   {
+    group: "Payroll",
     label: "Salary",
     href: "/dashboard/salary",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-      </svg>
-    ),
+    icon: BarChart3,
     children: [
       { label: "Structures", href: "/dashboard/salary/structures" },
       { label: "Rules", href: "/dashboard/salary/rules" },
     ],
   },
   {
+    group: "System",
     label: "Settings",
     href: "/dashboard/settings",
-    icon: (
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-      </svg>
-    ),
+    icon: SettingsIcon,
+  },
+  {
+    group: "System",
+    label: "Users",
+    href: "/dashboard/users",
+    icon: ShieldCheck,
   },
 ];
 
 function NavItem({
   item,
   pathname,
+  collapsed,
 }: {
   item: (typeof NAV_ITEMS)[0];
   pathname: string;
+  collapsed: boolean;
 }) {
   const isActive = item.exact
     ? pathname === item.href
     : pathname.startsWith(item.href) && item.href !== "/dashboard";
   const hasChildren = item.children && item.children.length > 0;
   const childActive = item.children?.some((c) => pathname.startsWith(c.href));
+  const Icon = item.icon;
+  const active = isActive || childActive;
 
   return (
     <li>
       <Link
         href={item.href}
-        className="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors"
+        className="group relative flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-colors"
         style={{
-          color: isActive || childActive ? "white" : "var(--pp-sidebar-fg)",
-          background: isActive
-            ? "var(--pp-brand)"
-            : childActive
-              ? "rgba(255,255,255,.08)"
-              : "transparent",
+          color: active ? "white" : "var(--pp-sidebar-fg)",
+          background: active ? "var(--pp-sidebar-active)" : "transparent",
         }}
         onMouseEnter={(e) => {
-          if (!isActive)
+          if (!active)
             (e.currentTarget as HTMLElement).style.background =
               "var(--pp-sidebar-hover)";
         }}
         onMouseLeave={(e) => {
-          if (!isActive)
-            (e.currentTarget as HTMLElement).style.background = childActive
-              ? "rgba(255,255,255,.08)"
-              : "transparent";
+          if (!active)
+            (e.currentTarget as HTMLElement).style.background = "transparent";
         }}
       >
-        <span style={{ opacity: isActive || childActive ? 1 : 0.65 }}>
-          {item.icon}
-        </span>
-        <span>{item.label}</span>
+        <Icon
+          className="size-4 shrink-0"
+          style={{ opacity: active ? 1 : 0.65 }}
+        />
+        <span className={collapsed ? "sr-only" : ""}>{item.label}</span>
       </Link>
-      {hasChildren && (childActive || isActive) && (
-        <ul className="mt-0.5 ml-6 space-y-0.5">
+      {hasChildren && !collapsed && active && (
+        <ul
+          className="mt-0.5 ml-[26px] space-y-0.5 border-l pl-3.5"
+          style={{ borderColor: "var(--pp-sidebar-border)" }}
+        >
           {item.children!.map((child) => {
             const ca = pathname.startsWith(child.href);
             return (
               <li key={child.href}>
                 <Link
                   href={child.href}
-                  className="block px-3 py-1.5 rounded text-xs transition-colors"
+                  className="block rounded-lg px-2.5 py-1.5 text-xs transition-colors"
                   style={{
                     color: ca ? "white" : "var(--pp-sidebar-fg)",
-                    background: ca ? "rgba(255,255,255,.12)" : "transparent",
+                    background: ca ? "rgba(255,255,255,.08)" : "transparent",
                   }}
                 >
                   {child.label}
@@ -237,88 +183,201 @@ export default function DashboardLayout({
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/login");
-    }
+    if (!loading && !user) router.replace("/login");
   }, [user, loading, router]);
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-sm text-gray-400">Loading…</div>
+      <div className="flex h-screen items-center justify-center bg-[var(--pp-page-bg)]">
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <span className="size-2 animate-pulse rounded-full bg-[var(--pp-brand)]" />
+          Loading workspace…
+        </div>
       </div>
     );
   }
-
   if (!user) return null;
+
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (["/dashboard/settings", "/dashboard/users"].includes(item.href))
+      return user.role === "ADMIN";
+    if (["/dashboard/payroll", "/dashboard/salary"].includes(item.href))
+      return canAccessPayroll(user.role);
+    if (
+      [
+        "/dashboard/employees",
+        "/dashboard/contracts",
+        "/dashboard/departments",
+      ].includes(item.href)
+    )
+      return (
+        canAccessHR(user.role) ||
+        canAccessPayroll(user.role) ||
+        user.role === "MANAGER"
+      );
+    return true;
+  });
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Sidebar */}
+      {sidebarOpen && (
+        <button
+          aria-label="Close navigation"
+          className="fixed inset-0 z-30 bg-slate-950/40 backdrop-blur-[2px] md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
       <aside
-        className="w-56 flex flex-col flex-shrink-0 overflow-y-auto"
-        style={{ background: "var(--pp-sidebar-bg)" }}
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col overflow-y-auto app-scrollbar transition-[width,transform] duration-200 md:static md:z-auto md:translate-x-0 ${sidebarCollapsed ? "md:w-[76px]" : "md:w-64"} w-64 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        style={{
+          background:
+            "linear-gradient(180deg, var(--pp-sidebar-bg-2) 0%, var(--pp-sidebar-bg) 60%)",
+        }}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-white/10">
-          <div
-            className="w-7 h-7 rounded flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
-            style={{ background: "var(--pp-brand)" }}
+        <div
+          className={`flex items-center justify-between gap-2.5 border-b px-4 py-4.5 ${sidebarCollapsed ? "md:px-3" : ""}`}
+          style={{ borderColor: "var(--pp-sidebar-border)" }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold text-white shadow-[var(--pp-shadow-sm)]"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--pp-brand), var(--pp-accent))",
+              }}
+            >
+              P3
+            </div>
+            <div className={sidebarCollapsed ? "md:hidden" : ""}>
+              <p className="text-sm font-semibold leading-tight text-white">
+                PeoplePay360
+              </p>
+              <p className="text-[11px] text-white/40">HR & Payroll ops</p>
+            </div>
+          </div>
+          <button
+            className="text-white/50 md:hidden"
+            aria-label="Close navigation"
+            onClick={() => setSidebarOpen(false)}
           >
-            P3
-          </div>
-          <div>
-            <p className="text-white text-sm font-semibold leading-tight">
-              PeoplePay360
-            </p>
-            <p className="text-gray-500 text-xs">HR & Payroll</p>
-          </div>
+            <X className="size-5" />
+          </button>
+          <button
+            className="hidden text-white/40 hover:text-white md:block"
+            aria-label={
+              sidebarCollapsed ? "Expand navigation" : "Collapse navigation"
+            }
+            onClick={() => setSidebarCollapsed((v) => !v)}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen className="size-4" />
+            ) : (
+              <PanelLeftClose className="size-4" />
+            )}
+          </button>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-2 py-3">
+        <nav className="flex-1 px-2.5 py-3.5">
           <ul className="space-y-0.5">
-            {NAV_ITEMS.map((item) => (
-              <NavItem key={item.href} item={item} pathname={pathname} />
+            {visibleItems.map((item, index) => (
+              <div key={item.href}>
+                {!sidebarCollapsed &&
+                  (index === 0 ||
+                    item.group !== visibleItems[index - 1].group) && (
+                    <p className="mb-1.5 mt-4.5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/25 first:mt-0">
+                      {item.group}
+                    </p>
+                  )}
+                <NavItem
+                  item={item}
+                  pathname={pathname}
+                  collapsed={sidebarCollapsed}
+                />
+              </div>
             ))}
           </ul>
         </nav>
 
-        {/* User */}
-        <div className="px-3 py-3 border-t border-white/10">
-          <div className="flex items-center gap-2 mb-2">
+        <div
+          className={`border-t px-3 py-3.5 ${sidebarCollapsed ? "md:px-2" : ""}`}
+          style={{ borderColor: "var(--pp-sidebar-border)" }}
+        >
+          <div className="mb-2 flex items-center gap-2.5 rounded-xl px-1.5 py-1.5">
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0"
-              style={{ background: "var(--pp-brand)" }}
+              className="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white"
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--pp-accent), var(--pp-brand))",
+              }}
             >
               {user.email[0].toUpperCase()}
             </div>
-            <div className="min-w-0">
-              <p className="text-white text-xs font-medium truncate">
+            <div className={sidebarCollapsed ? "md:hidden" : "min-w-0"}>
+              <p className="truncate text-xs font-medium text-white">
                 {user.email.split("@")[0]}
               </p>
-              <p className="text-gray-500 text-xs truncate">
-                {user.role.replace("_", " ")}
+              <p className="truncate text-[11px] text-white/40">
+                {ROLE_LABELS[user.role]}
               </p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full text-left text-xs text-gray-500 hover:text-gray-300 transition-colors px-1 py-1"
+            className={`flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 text-left text-xs text-white/40 transition hover:bg-white/5 hover:text-white ${sidebarCollapsed ? "md:justify-center" : ""}`}
+            title={sidebarCollapsed ? "Sign out" : undefined}
           >
-            Sign out
+            <LogOut className="size-3.5" />
+            <span className={sidebarCollapsed ? "md:hidden" : ""}>
+              Sign out
+            </span>
           </button>
         </div>
       </aside>
 
-      {/* Main content */}
       <main
-        className="flex-1 overflow-auto"
+        className="flex min-w-0 flex-1 flex-col overflow-auto app-scrollbar"
         style={{ background: "var(--pp-page-bg)" }}
       >
-        {children}
+        <div className="sticky top-0 z-20 flex h-14 items-center justify-between border-b bg-white/95 px-4 backdrop-blur md:hidden">
+          <button
+            aria-label="Open navigation"
+            className="text-slate-600"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="size-5" />
+          </button>
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <span className="flex size-7 items-center justify-center rounded-lg bg-[var(--pp-brand)] text-[10px] font-bold text-white">
+              P3
+            </span>
+            PeoplePay360
+          </div>
+          <span className="size-5" />
+        </div>
+        <div className="hidden items-center justify-between border-b bg-white/80 px-6 py-2.5 text-xs text-slate-500 backdrop-blur md:flex">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-slate-700">Workspace</span>
+            <ChevronRight className="size-3 text-slate-300" />
+            <span className="font-medium text-slate-900">
+              {pathname === "/dashboard"
+                ? "Overview"
+                : pathname
+                    .split("/")
+                    .filter(Boolean)
+                    .slice(-1)[0]
+                    ?.replaceAll("-", " ")}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-slate-400">
+            <Search className="size-4 cursor-pointer hover:text-slate-600" />
+            <Bell className="size-4 cursor-pointer hover:text-slate-600" />
+          </div>
+        </div>
+        <div className="page-enter flex flex-1 flex-col">{children}</div>
       </main>
     </div>
   );

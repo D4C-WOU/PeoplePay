@@ -25,17 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
+import { LoadingBanner } from "@/components/shared/state-banner";
 import { EmptyState } from "@/components/shared/empty-state";
+import { DataTable } from "@/components/shared/data-table";
 import {
   useSalaryRules,
   useSalaryStructures,
@@ -277,72 +270,76 @@ function SalaryRulesContent() {
           </SelectContent>
         </Select>
 
-        {error && <ErrorBanner message={error} />}
         {!structureId ? (
           <EmptyState
             icon={ListOrdered}
             title="Select a salary structure"
             description="Choose a structure above to view or add its salary rules."
           />
-        ) : loading ? (
-          <LoadingBanner label="Loading salary rules…" />
-        ) : !rules || rules.length === 0 ? (
-          <EmptyState
-            icon={ListOrdered}
-            title="No salary rules yet"
-            description="Add rules — this structure will not compute payslips without them."
-          />
         ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Seq</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Calculation</TableHead>
-                  <TableHead>Value</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rules
-                  .slice()
-                  .sort((a, b) => a.sequence - b.sequence)
-                  .map((rule) => (
-                    <TableRow key={rule.id}>
-                      <TableCell>{rule.sequence}</TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {rule.code}
-                      </TableCell>
-                      <TableCell className="font-medium">{rule.name}</TableCell>
-                      <TableCell className="capitalize text-muted-foreground">
-                        {rule.category.replaceAll("_", " ").toLowerCase()}
-                      </TableCell>
-                      <TableCell className="capitalize text-muted-foreground">
-                        {rule.calculation_type.toLowerCase()}
-                      </TableCell>
-                      <TableCell>
-                        {rule.calculation_type === "FIXED" && rule.amount}
-                        {rule.calculation_type === "PERCENTAGE" &&
-                          `${rule.percentage}%`}
-                        {rule.calculation_type === "FORMULA" && (
-                          <code className="text-xs">{rule.formula}</code>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={rule.is_active ? "default" : "secondary"}
-                        >
-                          {rule.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            rows={(rules ?? []).slice().sort((a, b) => a.sequence - b.sequence)}
+            rowKey={(rule) => rule.id}
+            loading={loading}
+            error={error}
+            emptyIcon={ListOrdered}
+            emptyTitle="No salary rules yet"
+            emptyDescription="Add rules — this structure will not compute payslips without them."
+            columns={[
+              {
+                key: "sequence",
+                header: "Seq",
+                render: (rule) => rule.sequence,
+              },
+              {
+                key: "code",
+                header: "Code",
+                className: "font-mono text-xs",
+                render: (rule) => rule.code,
+              },
+              {
+                key: "name",
+                header: "Name",
+                render: (rule) => (
+                  <span className="font-medium">{rule.name}</span>
+                ),
+              },
+              {
+                key: "category",
+                header: "Category",
+                className: "capitalize text-muted-foreground",
+                render: (rule) =>
+                  rule.category.replaceAll("_", " ").toLowerCase(),
+              },
+              {
+                key: "calculation",
+                header: "Calculation",
+                className: "capitalize text-muted-foreground",
+                render: (rule) => rule.calculation_type.toLowerCase(),
+              },
+              {
+                key: "value",
+                header: "Value",
+                render: (rule) =>
+                  rule.calculation_type === "FIXED" ? (
+                    rule.amount
+                  ) : rule.calculation_type === "PERCENTAGE" ? (
+                    `${rule.percentage}%`
+                  ) : (
+                    <code className="text-xs">{rule.formula}</code>
+                  ),
+              },
+              {
+                key: "status",
+                header: "Status",
+                render: (rule) => (
+                  <Badge variant={rule.is_active ? "default" : "secondary"}>
+                    {rule.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                ),
+              },
+            ]}
+          />
         )}
       </div>
     </div>

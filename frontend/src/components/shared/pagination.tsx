@@ -25,9 +25,13 @@ export function Pagination({
   const end = Math.min(page * pageSize, total);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-white px-3 py-3 text-sm text-muted-foreground">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--pp-border)] bg-slate-50/60 px-4 py-3 text-sm text-slate-500">
       <span>
-        Showing {start}-{end} of {total}
+        Showing{" "}
+        <span className="font-medium text-slate-700">
+          {start}-{end}
+        </span>{" "}
+        of <span className="font-medium text-slate-700">{total}</span>
       </span>
       <div className="flex items-center gap-2">
         <Button

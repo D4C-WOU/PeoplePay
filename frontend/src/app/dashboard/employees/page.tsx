@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Users } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -14,27 +13,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { EmptyState } from "@/components/shared/empty-state";
-import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
-import { Pagination } from "@/components/shared/pagination";
+import { DataTable } from "@/components/shared/data-table";
+import { FilterBar } from "@/components/shared/filter-bar";
 import { useDepartments, usePaginatedEmployees } from "@/hooks/useEmployees";
 
 const PAGE_SIZE = 10;
 
 export default function EmployeesPage() {
   const [departmentId, setDepartmentId] = useState<string>("all");
-  const [status, setStatus] = useState<string>("all");
-  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState<string>(() =>
+    typeof window !== "undefined"
+      ? (new URLSearchParams(window.location.search).get("status") ?? "all")
+      : "all",
+  );
+  const [query, setQuery] = useState<string>(() =>
+    typeof window !== "undefined"
+      ? (new URLSearchParams(window.location.search).get("search") ?? "")
+      : "",
+  );
   const [page, setPage] = useState(1);
 
   const { data: departments } = useDepartments();
@@ -82,16 +80,20 @@ export default function EmployeesPage() {
       />
 
       <div className="flex-1 space-y-4 p-4 sm:p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[220px] flex-1">
-            <Search className="absolute top-2 left-2.5 size-4 text-muted-foreground" />
-            <Input
-              value={query}
-              onChange={(e) => updateQuery(e.target.value)}
-              placeholder="Search by name, number or email"
-              className="pl-8"
-            />
-          </div>
+        <FilterBar
+          search={query}
+          onSearchChange={updateQuery}
+          searchPlaceholder="Search by name, number or email"
+          hasActiveFilters={Boolean(
+            query || departmentId !== "all" || status !== "all",
+          )}
+          onClear={() => {
+            setQuery("");
+            setDepartmentId("all");
+            setStatus("all");
+            setPage(1);
+          }}
+        >
           <Select value={departmentId} onValueChange={updateDepartment}>
             <SelectTrigger className="w-44">
               <SelectValue placeholder="Department" />
@@ -116,80 +118,75 @@ export default function EmployeesPage() {
               <SelectItem value="TERMINATED">Terminated</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </FilterBar>
 
-        {error && <ErrorBanner message={error} />}
-        {loading ? (
-          <LoadingBanner label="Loading employees…" />
-        ) : employees.length === 0 ? (
-          <EmptyState
-            icon={Users}
-            title="No employees match these filters"
-            description="Try clearing a filter, or add a new employee to get started."
-          />
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Number</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Job title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employees.map((emp) => (
-                  <TableRow key={emp.id} className="cursor-pointer">
-                    <TableCell>
-                      <Link
-                        href={`/dashboard/employees/${emp.id}`}
-                        className="flex items-center gap-2.5"
-                      >
-                        <Avatar size="sm">
-                          <AvatarFallback>
-                            {emp.first_name[0]}
-                            {emp.last_name[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">
-                            {emp.first_name} {emp.last_name}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {emp.email}
-                          </p>
-                        </div>
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {emp.employee_number}
-                    </TableCell>
-                    <TableCell>{departmentName(emp.department_id)}</TableCell>
-                    <TableCell>{emp.job_title ?? "—"}</TableCell>
-                    <TableCell className="capitalize text-muted-foreground">
-                      {emp.employee_type.replaceAll("_", " ").toLowerCase()}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={emp.status} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {employeePage && (
-              <Pagination
-                page={employeePage.page}
-                pageSize={employeePage.page_size}
-                total={employeePage.total}
-                pages={employeePage.pages}
-                onPageChange={setPage}
-              />
-            )}
-          </div>
-        )}
+        <DataTable
+          rows={employees}
+          rowKey={(employee) => employee.id}
+          loading={loading}
+          error={error}
+          emptyIcon={Users}
+          emptyTitle="No employees match these filters"
+          emptyDescription="Try clearing a filter, or add a new employee to get started."
+          page={employeePage?.page}
+          pageSize={employeePage?.page_size}
+          total={employeePage?.total}
+          pages={employeePage?.pages}
+          onPageChange={setPage}
+          columns={[
+            {
+              key: "employee",
+              header: "Employee",
+              render: (emp) => (
+                <Link
+                  href={`/dashboard/employees/${emp.id}`}
+                  className="flex items-center gap-2.5"
+                >
+                  <Avatar size="sm">
+                    <AvatarFallback>
+                      {emp.first_name[0]}
+                      {emp.last_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">
+                      {emp.first_name} {emp.last_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{emp.email}</p>
+                  </div>
+                </Link>
+              ),
+            },
+            {
+              key: "number",
+              header: "Number",
+              className: "text-muted-foreground",
+              render: (emp) => emp.employee_number,
+            },
+            {
+              key: "department",
+              header: "Department",
+              render: (emp) => departmentName(emp.department_id),
+            },
+            {
+              key: "job",
+              header: "Job title",
+              render: (emp) => emp.job_title ?? "—",
+            },
+            {
+              key: "type",
+              header: "Type",
+              className: "capitalize text-muted-foreground",
+              render: (emp) =>
+                emp.employee_type.replaceAll("_", " ").toLowerCase(),
+            },
+            {
+              key: "status",
+              header: "Status",
+              render: (emp) => <StatusBadge status={emp.status} />,
+            },
+          ]}
+        />
       </div>
     </div>
   );

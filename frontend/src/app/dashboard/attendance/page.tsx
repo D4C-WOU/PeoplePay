@@ -23,18 +23,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Pagination } from "@/components/shared/pagination";
+import { DataTable } from "@/components/shared/data-table";
+import { FilterBar } from "@/components/shared/filter-bar";
 import { usePaginatedAttendance, attendanceApi } from "@/hooks/useAttendance";
 import { useEmployees } from "@/hooks/useEmployees";
 import { ApiError } from "@/lib/api";
@@ -227,87 +218,92 @@ export default function AttendancePage() {
         actions={<NewAttendanceDialog onCreated={reload} />}
       />
       <div className="flex-1 space-y-4 p-4 sm:p-6">
-        <Select value={status} onValueChange={updateStatus}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="PRESENT">Present</SelectItem>
-            <SelectItem value="ABSENT">Absent</SelectItem>
-            <SelectItem value="HALF_DAY">Half day</SelectItem>
-            <SelectItem value="LATE">Late</SelectItem>
-            <SelectItem value="ON_LEAVE">On leave</SelectItem>
-            <SelectItem value="HOLIDAY">Holiday</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {error && <ErrorBanner message={error} />}
-        {loading ? (
-          <LoadingBanner label="Loading attendance…" />
-        ) : records.length === 0 ? (
-          <EmptyState
-            icon={CalendarClock}
-            title="No attendance records"
-            description="Add a record, or wait for employees to check in."
-          />
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Check in</TableHead>
-                  <TableHead>Check out</TableHead>
-                  <TableHead>Worked</TableHead>
-                  <TableHead>Overtime</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {records.map((r) => (
-                  <TableRow key={r.id}>
-                    <TableCell className="font-medium">
-                      {employeeName(r.employee_id)}
-                    </TableCell>
-                    <TableCell>{r.attendance_date}</TableCell>
-                    <TableCell>
-                      {r.check_in
-                        ? new Date(r.check_in).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {r.check_out
-                        ? new Date(r.check_out).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "—"}
-                    </TableCell>
-                    <TableCell>{r.worked_hours}h</TableCell>
-                    <TableCell>{r.overtime_hours}h</TableCell>
-                    <TableCell>
-                      <StatusBadge status={r.status} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            {attendancePage && (
-              <Pagination
-                page={attendancePage.page}
-                pageSize={attendancePage.page_size}
-                total={attendancePage.total}
-                pages={attendancePage.pages}
-                onPageChange={setPage}
-              />
-            )}
-          </div>
-        )}
+        <FilterBar
+          hasActiveFilters={status !== "all"}
+          onClear={() => updateStatus("all")}
+        >
+          <Select value={status} onValueChange={updateStatus}>
+            <SelectTrigger className="w-44 bg-white">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="PRESENT">Present</SelectItem>
+              <SelectItem value="ABSENT">Absent</SelectItem>
+              <SelectItem value="HALF_DAY">Half day</SelectItem>
+              <SelectItem value="LATE">Late</SelectItem>
+              <SelectItem value="ON_LEAVE">On leave</SelectItem>
+              <SelectItem value="HOLIDAY">Holiday</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterBar>
+        <DataTable
+          rows={records}
+          rowKey={(record) => record.id}
+          loading={loading}
+          error={error}
+          emptyIcon={CalendarClock}
+          emptyTitle="No attendance records"
+          emptyDescription="Add a record, or wait for employees to check in."
+          page={attendancePage?.page}
+          pageSize={attendancePage?.page_size}
+          total={attendancePage?.total}
+          pages={attendancePage?.pages}
+          onPageChange={setPage}
+          columns={[
+            {
+              key: "employee",
+              header: "Employee",
+              render: (record) => (
+                <span className="font-medium">
+                  {employeeName(record.employee_id)}
+                </span>
+              ),
+            },
+            {
+              key: "date",
+              header: "Date",
+              render: (record) => record.attendance_date,
+            },
+            {
+              key: "in",
+              header: "Check in",
+              render: (record) =>
+                record.check_in
+                  ? new Date(record.check_in).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "—",
+            },
+            {
+              key: "out",
+              header: "Check out",
+              render: (record) =>
+                record.check_out
+                  ? new Date(record.check_out).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "—",
+            },
+            {
+              key: "worked",
+              header: "Worked",
+              render: (record) => `${record.worked_hours}h`,
+            },
+            {
+              key: "overtime",
+              header: "Overtime",
+              render: (record) => `${record.overtime_hours}h`,
+            },
+            {
+              key: "status",
+              header: "Status",
+              render: (record) => <StatusBadge status={record.status} />,
+            },
+          ]}
+        />
       </div>
     </div>
   );

@@ -20,17 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
-import { EmptyState } from "@/components/shared/empty-state";
+import { DataTable } from "@/components/shared/data-table";
 import { useTimeOffTypes, timeOffApi } from "@/hooks/useTimeOff";
 import { ApiError } from "@/lib/api";
 
@@ -187,51 +178,53 @@ export default function TimeOffPage() {
           </Card>
         </div>
 
-        {error && <ErrorBanner message={error} />}
-        {loading ? (
-          <LoadingBanner label="Loading time-off types…" />
-        ) : !types || types.length === 0 ? (
-          <EmptyState
-            icon={CalendarRange}
-            title="No time-off types yet"
-            description="Create a type such as Annual Leave or Sick Leave to get started."
-          />
-        ) : (
-          <div className="overflow-hidden rounded-xl border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Default allocation</TableHead>
-                  <TableHead>Paid</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {types.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-mono text-xs">
-                      {t.code}
-                    </TableCell>
-                    <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell>{t.default_allocation} days</TableCell>
-                    <TableCell>
-                      <Badge variant={t.is_paid ? "default" : "secondary"}>
-                        {t.is_paid ? "Paid" : "Unpaid"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={t.is_active ? "default" : "secondary"}>
-                        {t.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+        <DataTable
+          rows={types ?? []}
+          rowKey={(type) => type.id}
+          loading={loading}
+          error={error}
+          emptyIcon={CalendarRange}
+          emptyTitle="No time-off types yet"
+          emptyDescription="Create a type such as Annual Leave or Sick Leave to get started."
+          columns={[
+            {
+              key: "code",
+              header: "Code",
+              className: "font-mono text-xs",
+              render: (type) => type.code,
+            },
+            {
+              key: "name",
+              header: "Name",
+              render: (type) => (
+                <span className="font-medium">{type.name}</span>
+              ),
+            },
+            {
+              key: "allocation",
+              header: "Default allocation",
+              render: (type) => `${type.default_allocation} days`,
+            },
+            {
+              key: "paid",
+              header: "Paid",
+              render: (type) => (
+                <Badge variant={type.is_paid ? "default" : "secondary"}>
+                  {type.is_paid ? "Paid" : "Unpaid"}
+                </Badge>
+              ),
+            },
+            {
+              key: "status",
+              header: "Status",
+              render: (type) => (
+                <Badge variant={type.is_active ? "default" : "secondary"}>
+                  {type.is_active ? "Active" : "Inactive"}
+                </Badge>
+              ),
+            },
+          ]}
+        />
       </div>
     </div>
   );

@@ -2,8 +2,41 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Users2,
+  Clock4,
+  Wallet,
+  ShieldCheck,
+  ArrowRight,
+  Loader2,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
+
+const FEATURES = [
+  {
+    icon: Users2,
+    title: "Employee management",
+    desc: "Profiles, contracts, and org structure in one connected view",
+  },
+  {
+    icon: Clock4,
+    title: "Attendance & leave",
+    desc: "Schedules, check-ins, and leave balances tracked automatically",
+  },
+  {
+    icon: Wallet,
+    title: "Payroll engine",
+    desc: "Rule-based salary computation with audit-ready payslips",
+  },
+];
+
+const DEMO_ACCOUNTS = [
+  "admin@peoplepay.com",
+  "hr@peoplepay.com",
+  "payroll.manager@peoplepay.com",
+  "employee@peoplepay.com",
+];
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -28,91 +61,79 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left panel */}
+    <div className="flex min-h-screen bg-[var(--pp-page-bg)]">
       <div
-        className="hidden lg:flex lg:w-[420px] flex-col justify-between p-10"
-        style={{ background: "var(--pp-sidebar-bg)" }}
+        className="relative hidden w-[480px] flex-col justify-between overflow-hidden p-11 lg:flex"
+        style={{
+          background:
+            "radial-gradient(1200px 600px at -10% -10%, #312e81 0%, transparent 55%), radial-gradient(900px 500px at 110% 110%, #9a3412 0%, transparent 50%), var(--pp-sidebar-bg)",
+        }}
       >
-        <div>
-          <div className="flex items-center gap-3 mb-12">
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-              style={{ background: "var(--pp-brand)" }}
-            >
+        <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:36px_36px]" />
+
+        <div className="relative z-10">
+          <div className="mb-14 flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-2xl bg-white/10 text-sm font-bold text-white ring-1 ring-white/15">
               P3
             </div>
-            <span className="text-white font-semibold text-base">
+            <span className="text-base font-semibold tracking-tight text-white">
               PeoplePay360
             </span>
           </div>
 
-          <h1 className="text-white text-3xl font-semibold leading-tight mb-4">
-            HR & Payroll,
+          <h1 className="mb-4 text-[2.2rem] font-semibold leading-[1.15] tracking-tight text-white">
+            HR &amp; Payroll,
             <br />
-            done right.
+            reimagined.
           </h1>
-          <p className="text-gray-400 text-sm leading-relaxed mb-10">
-            One platform for employee records, attendance, leave management, and
-            payroll processing — with full audit history.
+          <p className="mb-11 max-w-sm text-sm leading-relaxed text-white/55">
+            One connected platform for employee records, attendance, leave, and
+            payroll processing — with a full audit trail.
           </p>
 
           <div className="space-y-5">
-            {[
-              {
-                icon: "👥",
-                title: "Employee management",
-                desc: "Profiles, contracts, and org structure in one view",
-              },
-              {
-                icon: "🕐",
-                title: "Attendance & leave",
-                desc: "Schedules, check-ins, and leave balances tracked automatically",
-              },
-              {
-                icon: "💰",
-                title: "Payroll engine",
-                desc: "Rule-based salary computation with PDF payslips",
-              },
-            ].map((f) => (
-              <div key={f.title} className="flex gap-3">
-                <span className="text-xl mt-0.5">{f.icon}</span>
+            {FEATURES.map((f) => (
+              <div key={f.title} className="flex gap-3.5">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/8 ring-1 ring-white/10">
+                  <f.icon className="size-4 text-white/80" />
+                </div>
                 <div>
-                  <p className="text-white text-sm font-medium">{f.title}</p>
-                  <p className="text-gray-400 text-xs mt-0.5">{f.desc}</p>
+                  <p className="text-sm font-medium text-white">{f.title}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-white/45">
+                    {f.desc}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-gray-600 text-xs">
-          © {new Date().getFullYear()} PeoplePay360
-        </p>
+        <div className="relative z-10 flex items-center gap-2 text-xs text-white/35">
+          <ShieldCheck className="size-3.5" />© {new Date().getFullYear()}{" "}
+          PeoplePay360 · Enterprise-grade security
+        </div>
       </div>
 
-      {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center bg-white px-6">
+      <div className="flex flex-1 items-center justify-center px-6 py-10">
         <div className="w-full max-w-sm">
           <div className="mb-8">
-            <div className="lg:hidden flex items-center gap-2 mb-6">
-              <div
-                className="w-8 h-8 rounded flex items-center justify-center text-white font-bold text-sm"
-                style={{ background: "var(--pp-brand)" }}
-              >
+            <div className="mb-6 flex items-center gap-2 lg:hidden">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-[var(--pp-brand)] text-sm font-bold text-white">
                 P3
               </div>
-              <span className="font-semibold">PeoplePay360</span>
+              <span className="font-semibold text-slate-900">PeoplePay360</span>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900">Sign in</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Use your workspace credentials
+            <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+              Welcome back
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Sign in with your workspace credentials
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wide">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Email
               </label>
               <input
@@ -120,13 +141,13 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-200 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition"
+                className="w-full rounded-xl border border-[var(--pp-border-strong)] bg-white px-3.5 py-2.5 text-sm shadow-[var(--pp-shadow-xs)] outline-none transition focus:border-[var(--pp-brand)] focus:ring-4 focus:ring-[var(--pp-brand-light)]"
                 placeholder="you@company.com"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1.5 uppercase tracking-wide">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Password
               </label>
               <input
@@ -134,13 +155,13 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-200 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-purple-600 focus:ring-1 focus:ring-purple-600 transition"
+                className="w-full rounded-xl border border-[var(--pp-border-strong)] bg-white px-3.5 py-2.5 text-sm shadow-[var(--pp-shadow-xs)] outline-none transition focus:border-[var(--pp-brand)] focus:ring-4 focus:ring-[var(--pp-brand-light)]"
                 placeholder="••••••••"
               />
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-md px-3 py-2">
+              <div className="rounded-xl border border-[var(--pp-danger)]/25 bg-[var(--pp-danger-bg)] px-3.5 py-2.5 text-sm text-[var(--pp-danger)]">
                 {error}
               </div>
             )}
@@ -148,23 +169,35 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-md text-sm font-medium text-white transition disabled:opacity-60"
-              style={{ background: "var(--pp-brand)" }}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--pp-brand)] py-2.5 text-sm font-medium text-white shadow-[var(--pp-shadow-sm)] transition hover:bg-[var(--pp-brand-dark)] disabled:opacity-60"
             >
-              {loading ? "Signing in…" : "Sign in"}
+              {loading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <>
+                  Sign in <ArrowRight className="size-4" />
+                </>
+              )}
             </button>
           </form>
 
-          <div className="mt-6 p-3 bg-gray-50 rounded-md border border-gray-100">
-            <p className="text-xs font-medium text-gray-700 mb-1">
+          <div className="mt-6 rounded-2xl border border-[var(--pp-border)] bg-[var(--pp-brand-light)]/60 p-3.5">
+            <p className="mb-1 text-xs font-semibold text-slate-700">
               Demo accounts
             </p>
-            <p className="text-xs text-gray-500 leading-relaxed">
-              admin@peoplepay.com · hr@peoplepay.com
-              <br />
-              payroll.manager@peoplepay.com · employee@peoplepay.com
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
+            <div className="flex flex-wrap gap-1.5">
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc}
+                  type="button"
+                  onClick={() => setEmail(acc)}
+                  className="rounded-lg border border-[var(--pp-border-strong)] bg-white px-2 py-1 text-[11px] text-slate-600 hover:border-[var(--pp-brand)] hover:text-[var(--pp-brand)]"
+                >
+                  {acc}
+                </button>
+              ))}
+            </div>
+            <p className="mt-2 text-[11px] text-slate-400">
               All passwords end with @123
             </p>
           </div>
