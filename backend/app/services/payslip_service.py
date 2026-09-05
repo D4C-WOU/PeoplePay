@@ -1,7 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models.payslip import Payslip, PayslipStatus
+from app.models.payslip import (
+    Payslip,
+    PayslipStatus,
+)
 
 
 def list_payslips(
@@ -9,16 +12,7 @@ def list_payslips(
     employee_id: str | None = None,
     payrun_id: str | None = None,
     status: PayslipStatus | None = None,
-) -> list[Payslip]:
-    """
-    Return payslips with their lines eagerly loaded.
-
-    Optional filters:
-    - employee_id
-    - payrun_id
-    - status
-    """
-
+):
     stmt = (
         select(Payslip)
         .options(selectinload(Payslip.lines))
@@ -34,17 +28,13 @@ def list_payslips(
     if status:
         stmt = stmt.where(Payslip.status == status)
 
-    return db.scalars(stmt).all()
+    return list(db.scalars(stmt).unique().all())
 
 
 def get_payslip(
     db: Session,
     payslip_id: str,
-) -> Payslip:
-    """
-    Get a single payslip with all payslip lines.
-    """
-
+):
     payslip = db.scalar(
         select(Payslip)
         .options(selectinload(Payslip.lines))
@@ -60,13 +50,7 @@ def get_payslip(
 def mark_paid(
     db: Session,
     payslip: Payslip,
-) -> Payslip:
-    """
-    Mark a finalized payslip as paid.
-
-    Only FINALIZED payslips can become PAID.
-    """
-
+):
     if payslip.status != PayslipStatus.FINALIZED:
         raise ValueError("Only finalized payslips can be marked paid")
 

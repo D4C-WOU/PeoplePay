@@ -54,7 +54,7 @@ def list_payslips(
     else:
         require_permission(
             user,
-            "payroll:read",
+            "payslips:read",
         )
 
     return payslip_service.list_payslips(
@@ -93,7 +93,7 @@ def get_payslip(
     else:
         require_permission(
             user,
-            "payroll:read",
+            "payslips:read",
         )
 
     return payslip
@@ -126,7 +126,7 @@ def get_payslip_pdf(
     else:
         require_permission(
             user,
-            "payroll:read",
+            "payslips:read",
         )
 
     try:
@@ -142,5 +142,5 @@ def get_payslip_pdf(
     return StreamingResponse(
         BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={"Content-Disposition": (f'attachment; filename="{filename}"')},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

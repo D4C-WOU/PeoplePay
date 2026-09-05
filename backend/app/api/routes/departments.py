@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -8,6 +7,11 @@ from app.api.deps import get_current_active_user
 from app.core.permissions import require_permission
 from app.db.database import get_db
 from app.models.department import Department
+from app.schemas.department import (
+    DepartmentCreate,
+    DepartmentResponse,
+    DepartmentUpdate,
+)
 
 router = APIRouter(
     prefix="/departments",
@@ -15,48 +19,22 @@ router = APIRouter(
 )
 
 
-class DepartmentCreate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    name: str = Field(
-        min_length=1,
-        max_length=150,
-    )
-    code: str = Field(
-        min_length=1,
-        max_length=50,
-    )
-    description: str | None = None
-    is_active: bool = True
-
-
-class DepartmentUpdate(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    name: str | None = Field(
-        default=None,
-        min_length=1,
-        max_length=150,
-    )
-    description: str | None = None
-    is_active: bool | None = None
-
-
-@router.get("")
+@router.get(
+    "",
+    response_model=list[DepartmentResponse],
+)
 def list_departments(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "departments:read",
-    )
+    require_permission(user, "departments:read")
 
-    return db.scalars(select(Department).order_by(Department.name)).all()
+    return list(db.scalars(select(Department).order_by(Department.name)).all())
 
 
 @router.post(
     "",
+    response_model=DepartmentResponse,
     status_code=201,
 )
 def create_department(
@@ -64,14 +42,11 @@ def create_department(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "departments:write",
-    )
+    require_permission(user, "departments:write")
 
     existing = db.scalar(select(Department).where(Department.code == data.code))
 
-    if existing:
+    if existing is not None:
         raise HTTPException(
             status_code=409,
             detail="Department code already exists",
@@ -90,25 +65,22 @@ def create_department(
         db.rollback()
         raise HTTPException(
             status_code=409,
-            detail="Department conflicts with an existing department",
+            detail="Department conflicts with existing data",
         ) from exc
 
 
-@router.get("/{department_id}")
+@router.get(
+    "/{department_id}",
+    response_model=DepartmentResponse,
+)
 def get_department(
     department_id: str,
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "departments:read",
-    )
+    require_permission(user, "departments:read")
 
-    department = db.get(
-        Department,
-        department_id,
-    )
+    department = db.get(Department, department_id)
 
     if department is None:
         raise HTTPException(
@@ -119,22 +91,19 @@ def get_department(
     return department
 
 
-@router.patch("/{department_id}")
+@router.patch(
+    "/{department_id}",
+    response_model=DepartmentResponse,
+)
 def update_department(
     department_id: str,
     data: DepartmentUpdate,
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "departments:write",
-    )
+    require_permission(user, "departments:write")
 
-    department = db.get(
-        Department,
-        department_id,
-    )
+    department = db.get(Department, department_id)
 
     if department is None:
         raise HTTPException(
@@ -144,8 +113,8 @@ def update_department(
 
     updates = data.model_dump(exclude_unset=True)
 
-    for key, value in updates.items():
-        setattr(department, key, value)
+    for field, value in updates.items():
+        setattr(department, field, value)
 
     try:
         db.commit()
@@ -158,3 +127,57 @@ def update_department(
             status_code=409,
             detail="Department update conflicts with existing data",
         ) from exc
+
+
+@router.post(
+    "/{department_id}/activate",
+    response_model=DepartmentResponse,
+)
+def activate_department(
+    department_id: str,
+    user=Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    require_permission(user, "departments:write")
+
+    department = db.get(Department, department_id)
+
+    if department is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Department not found",
+        )
+
+    department.is_active = True
+
+    db.commit()
+    db.refresh(department)
+
+    return department
+
+
+@router.post(
+    "/{department_id}/deactivate",
+    response_model=DepartmentResponse,
+)
+def deactivate_department(
+    department_id: str,
+    user=Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    require_permission(user, "departments:write")
+
+    department = db.get(Department, department_id)
+
+    if department is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Department not found",
+        )
+
+    department.is_active = False
+
+    db.commit()
+    db.refresh(department)
+
+    return department

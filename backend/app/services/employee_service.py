@@ -1,17 +1,16 @@
-from datetime import date
-
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-
+from sqlalchemy import select
 from app.models.employee import Employee, EmployeeStatus
-from app.models.user import User
+from app.models.user import User, UserRole
 
 
 def get_employee(
     db: Session,
     employee_id: str,
 ) -> Employee:
+
     employee = db.get(
         Employee,
         employee_id,
@@ -28,7 +27,8 @@ def list_employees(
     department_id: str | None = None,
     status: EmployeeStatus | None = None,
 ) -> list[Employee]:
-    stmt = select(Employee)
+
+    stmt = select(Employee).order_by(Employee.created_at.desc())
 
     if department_id is not None:
         stmt = stmt.where(Employee.department_id == department_id)
@@ -36,49 +36,71 @@ def list_employees(
     if status is not None:
         stmt = stmt.where(Employee.status == status)
 
-    stmt = stmt.order_by(Employee.created_at.desc())
-
     return list(db.scalars(stmt).all())
+
+
+def _validate_user_for_employee(
+    db: Session,
+    user_id: str,
+    exclude_employee_id: str | None = None,
+) -> User:
+
+    user = db.get(
+        User,
+        user_id,
+    )
+
+    if user is None:
+        raise ValueError("User not found")
+
+    if not user.is_active:
+        raise ValueError("Employee user account must be active")
+
+    if user.role != UserRole.EMPLOYEE:
+        raise ValueError("Linked user must have the EMPLOYEE role")
+
+    stmt = select(Employee).where(Employee.user_id == user_id)
+
+    if exclude_employee_id is not None:
+        stmt = stmt.where(Employee.id != exclude_employee_id)
+
+    existing_employee = db.scalar(stmt)
+
+    if existing_employee is not None:
+        raise ValueError("User is already linked to another employee")
+
+    return user
 
 
 def create_employee(
     db: Session,
     data: dict,
 ) -> Employee:
+
     user_id = data.get("user_id")
 
     if user_id is not None:
-        user = db.get(
-            User,
+        _validate_user_for_employee(
+            db,
             user_id,
         )
-
-        if user is None:
-            raise ValueError("User not found")
-
-        existing_employee = db.scalar(
-            select(Employee).where(Employee.user_id == user_id)
-        )
-
-        if existing_employee is not None:
-            raise ValueError("User is already linked to an employee")
 
     employee_number = data.get("employee_number")
 
     if employee_number:
-        existing_employee = db.scalar(
+        existing = db.scalar(
             select(Employee).where(Employee.employee_number == employee_number)
         )
 
-        if existing_employee is not None:
+        if existing is not None:
             raise ValueError("Employee number already exists")
 
     email = data.get("email")
 
     if email:
-        existing_email = db.scalar(select(Employee).where(Employee.email == email))
+        existing = db.scalar(select(Employee).where(Employee.email == email))
 
-        if existing_email is not None:
+        if existing is not None:
             raise ValueError("Employee email already exists")
 
     employee = Employee(**data)
@@ -93,8 +115,7 @@ def create_employee(
         db.rollback()
 
         raise ValueError(
-            "Employee could not be created. "
-            "Employee number, email, or user may already exist."
+            "Employee could not be created because of a duplicate or invalid reference"
         )
 
     return employee
@@ -102,114 +123,57 @@ def create_employee(
 
 def update_employee(
     db: Session,
-    employee: Employee,
-    updates: dict,
+    employee_id: str,
+    data: dict,
 ) -> Employee:
-    new_status = updates.get(
-        "status",
-        employee.status,
+
+    employee = get_employee(
+        db,
+        employee_id,
     )
 
-    new_hire_date = updates.get(
-        "hire_date",
-        employee.hire_date,
-    )
+    updates = dict(data)
 
-    termination_date = updates.get(
-        "termination_date",
-        employee.termination_date,
-    )
+    new_user_id = updates.get("user_id")
 
-    if new_hire_date > date.today():
-        raise ValueError("hire_date cannot be in the future")
+    if new_user_id is not None and new_user_id != employee.user_id:
+        _validate_user_for_employee(
+            db,
+            new_user_id,
+            exclude_employee_id=employee.id,
+        )
 
-    if termination_date is not None and termination_date < new_hire_date:
-        raise ValueError("termination_date cannot be before hire_date")
-
-    if new_status == EmployeeStatus.TERMINATED and termination_date is None:
-        termination_date = date.today()
-
-    if new_status != EmployeeStatus.TERMINATED and termination_date is not None:
-        raise ValueError("Termination date can only be set for a terminated employee")
-
-    if "user_id" in updates:
-        user_id = updates["user_id"]
-
-        if user_id is not None:
-            user = db.get(
-                User,
-                user_id,
+    if (
+        "employee_number" in updates
+        and updates["employee_number"] != employee.employee_number
+    ):
+        existing = db.scalar(
+            select(Employee).where(
+                Employee.employee_number == updates["employee_number"],
+                Employee.id != employee.id,
             )
+        )
 
-            if user is None:
-                raise ValueError("User not found")
+        if existing is not None:
+            raise ValueError("Employee number already exists")
 
-            existing_employee = db.scalar(
-                select(Employee).where(
-                    Employee.user_id == user_id,
-                    Employee.id != employee.id,
-                )
+    if "email" in updates and updates["email"] != employee.email:
+        existing = db.scalar(
+            select(Employee).where(
+                Employee.email == updates["email"],
+                Employee.id != employee.id,
             )
+        )
 
-            if existing_employee is not None:
-                raise ValueError("User is already linked to another employee")
-
-    if "employee_number" in updates:
-        employee_number = updates["employee_number"]
-
-        if employee_number is not None:
-            existing_employee = db.scalar(
-                select(Employee).where(
-                    Employee.employee_number == employee_number,
-                    Employee.id != employee.id,
-                )
-            )
-
-            if existing_employee is not None:
-                raise ValueError("Employee number already exists")
-
-    if "email" in updates:
-        email = updates["email"]
-
-        if email is not None:
-            existing_email = db.scalar(
-                select(Employee).where(
-                    Employee.email == email,
-                    Employee.id != employee.id,
-                )
-            )
-
-            if existing_email is not None:
-                raise ValueError("Employee email already exists")
-
-    allowed_fields = {
-        "employee_number",
-        "first_name",
-        "last_name",
-        "email",
-        "phone",
-        "date_of_birth",
-        "hire_date",
-        "termination_date",
-        "job_title",
-        "status",
-        "address",
-        "emergency_contact_name",
-        "emergency_contact_phone",
-        "department_id",
-        "user_id",
-    }
+        if existing is not None:
+            raise ValueError("Employee email already exists")
 
     for field, value in updates.items():
-        if field in allowed_fields:
-            setattr(
-                employee,
-                field,
-                value,
-            )
-
-    if new_status == EmployeeStatus.TERMINATED:
-        employee.termination_date = termination_date
+        setattr(
+            employee,
+            field,
+            value,
+        )
 
     try:
         db.commit()
@@ -225,10 +189,18 @@ def update_employee(
 
 def terminate_employee(
     db: Session,
-    employee: Employee,
+    employee_id: str,
 ) -> Employee:
+
+    employee = get_employee(
+        db,
+        employee_id,
+    )
+
     if employee.status == EmployeeStatus.TERMINATED:
-        return employee
+        raise ValueError("Employee is already terminated")
+
+    from datetime import date
 
     employee.status = EmployeeStatus.TERMINATED
     employee.termination_date = date.today()

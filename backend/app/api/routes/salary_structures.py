@@ -15,7 +15,7 @@ from app.schemas.salary_structure import (
 
 router = APIRouter(
     prefix="/salary/structures",
-    tags=["Salary"],
+    tags=["Salary Structures"],
 )
 
 
@@ -23,13 +23,19 @@ router = APIRouter(
     "",
     response_model=list[SalaryStructureResponse],
 )
-def list_structures(
+def list_salary_structures(
+    active_only: bool = False,
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
     require_permission(user, "salary:read")
 
-    return db.scalars(select(SalaryStructure).order_by(SalaryStructure.name)).all()
+    stmt = select(SalaryStructure).order_by(SalaryStructure.name)
+
+    if active_only:
+        stmt = stmt.where(SalaryStructure.is_active.is_(True))
+
+    return db.scalars(stmt).all()
 
 
 @router.post(
@@ -37,7 +43,7 @@ def list_structures(
     response_model=SalaryStructureResponse,
     status_code=201,
 )
-def create_structure(
+def create_salary_structure(
     data: SalaryStructureCreate,
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -61,21 +67,21 @@ def create_structure(
     try:
         db.commit()
         db.refresh(structure)
-        return structure
-
-    except IntegrityError as exc:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=409,
-            detail="Salary structure conflicts with an existing structure",
-        ) from exc
+            detail="Salary structure code already exists",
+        )
+
+    return structure
 
 
 @router.get(
     "/{structure_id}",
     response_model=SalaryStructureResponse,
 )
-def get_structure(
+def get_salary_structure(
     structure_id: str,
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
@@ -100,7 +106,7 @@ def get_structure(
     "/{structure_id}",
     response_model=SalaryStructureResponse,
 )
-def update_structure(
+def update_salary_structure(
     structure_id: str,
     data: SalaryStructureUpdate,
     user=Depends(get_current_active_user),
@@ -121,32 +127,31 @@ def update_structure(
 
     updates = data.model_dump(exclude_unset=True)
 
-    for key, value in updates.items():
-        setattr(structure, key, value)
-
-    if "code" in updates:
-        duplicate = db.scalar(
+    if "code" in updates and updates["code"] != structure.code:
+        existing = db.scalar(
             select(SalaryStructure).where(
-                SalaryStructure.id != structure.id,
-                SalaryStructure.code == structure.code,
+                SalaryStructure.code == updates["code"],
+                SalaryStructure.id != structure_id,
             )
         )
 
-        if duplicate:
-            db.rollback()
+        if existing:
             raise HTTPException(
                 status_code=409,
                 detail="Salary structure code already exists",
             )
 
+    for field, value in updates.items():
+        setattr(structure, field, value)
+
     try:
         db.commit()
         db.refresh(structure)
-        return structure
-
-    except IntegrityError as exc:
+    except IntegrityError:
         db.rollback()
         raise HTTPException(
             status_code=409,
-            detail="Salary structure conflicts with an existing structure",
-        ) from exc
+            detail="Salary structure update violates a database constraint",
+        )
+
+    return structure

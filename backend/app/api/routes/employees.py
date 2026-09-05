@@ -18,20 +18,14 @@ router = APIRouter(
 )
 
 
-@router.get(
-    "",
-    response_model=list[EmployeeResponse],
-)
+@router.get("", response_model=list[EmployeeResponse])
 def list_employees(
     department_id: str | None = None,
     status: EmployeeStatus | None = None,
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "employees:read",
-    )
+    require_permission(user, "employees:read")
 
     return employee_service.list_employees(
         db=db,
@@ -50,17 +44,13 @@ def create_employee(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "employees:write",
-    )
+    require_permission(user, "employees:write")
 
     try:
         return employee_service.create_employee(
             db=db,
             data=data.model_dump(),
         )
-
     except ValueError as exc:
         raise HTTPException(
             status_code=409,
@@ -77,17 +67,13 @@ def get_employee(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "employees:read",
-    )
+    require_permission(user, "employees:read")
 
     try:
         return employee_service.get_employee(
             db=db,
             employee_id=employee_id,
         )
-
     except ValueError as exc:
         raise HTTPException(
             status_code=404,
@@ -105,23 +91,14 @@ def update_employee(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "employees:write",
-    )
+    require_permission(user, "employees:write")
 
     try:
-        employee = employee_service.get_employee(
-            db=db,
-            employee_id=employee_id,
-        )
-
         return employee_service.update_employee(
             db=db,
-            employee=employee,
-            updates=data.model_dump(exclude_unset=True),
+            employee_id=employee_id,
+            data=data.model_dump(exclude_unset=True),
         )
-
     except ValueError as exc:
         if str(exc) == "Employee not found":
             raise HTTPException(
@@ -144,22 +121,13 @@ def terminate_employee(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "employees:write",
-    )
+    require_permission(user, "employees:write")
 
     try:
-        employee = employee_service.get_employee(
+        return employee_service.terminate_employee(
             db=db,
             employee_id=employee_id,
         )
-
-        return employee_service.terminate_employee(
-            db=db,
-            employee=employee,
-        )
-
     except ValueError as exc:
         if str(exc) == "Employee not found":
             raise HTTPException(

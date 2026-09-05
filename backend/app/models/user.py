@@ -1,4 +1,5 @@
 import enum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, Enum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -6,12 +7,17 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
+if TYPE_CHECKING:
+    from app.models.employee import Employee
+
 
 class UserRole(str, enum.Enum):
     ADMIN = "ADMIN"
-    HR = "HR"
+    HR_MANAGER = "HR_MANAGER"
     MANAGER = "MANAGER"
     EMPLOYEE = "EMPLOYEE"
+    PAYROLL_MANAGER = "PAYROLL_MANAGER"
+    PAYROLL_USER = "PAYROLL_USER"
 
 
 class User(UUIDMixin, TimestampMixin, Base):
@@ -30,7 +36,11 @@ class User(UUIDMixin, TimestampMixin, Base):
     )
 
     role: Mapped[UserRole] = mapped_column(
-        Enum(UserRole),
+        Enum(
+            UserRole,
+            name="user_role",
+            native_enum=True,
+        ),
         default=UserRole.EMPLOYEE,
         nullable=False,
     )
@@ -45,3 +55,43 @@ class User(UUIDMixin, TimestampMixin, Base):
         back_populates="user",
         uselist=False,
     )
+
+    __mapper_args__ = {
+        "polymorphic_on": role,
+    }
+
+
+class AdminUser(User):
+    __mapper_args__ = {
+        "polymorphic_identity": UserRole.ADMIN.value,
+    }
+
+
+class HRManagerUser(User):
+    __mapper_args__ = {
+        "polymorphic_identity": UserRole.HR_MANAGER.value,
+    }
+
+
+class ManagerUser(User):
+    __mapper_args__ = {
+        "polymorphic_identity": UserRole.MANAGER.value,
+    }
+
+
+class EmployeeUser(User):
+    __mapper_args__ = {
+        "polymorphic_identity": UserRole.EMPLOYEE.value,
+    }
+
+
+class PayrollManagerUser(User):
+    __mapper_args__ = {
+        "polymorphic_identity": UserRole.PAYROLL_MANAGER.value,
+    }
+
+
+class PayrollUser(User):
+    __mapper_args__ = {
+        "polymorphic_identity": UserRole.PAYROLL_USER.value,
+    }

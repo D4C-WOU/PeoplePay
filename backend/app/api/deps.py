@@ -1,40 +1,69 @@
-from collections.abc import Generator
-
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
 from app.db.database import get_db
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+security = HTTPBearer()
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
+
     credentials_error = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
+        status_code=401,
         detail="Invalid or expired authentication credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+        headers={
+            "WWW-Authenticate": "Bearer",
+        },
     )
+
     try:
+        token = credentials.credentials
         payload = decode_access_token(token)
+
         subject = payload.get("sub")
-        if not subject:
+        token_role = payload.get("role")
+
+        if not subject or not token_role:
             raise credentials_error
-    except (jwt.InvalidTokenError, TypeError, ValueError):
+
+    except (
+        jwt.InvalidTokenError,
+        TypeError,
+        ValueError,
+    ):
         raise credentials_error
+
     user = db.get(User, subject)
+
     if user is None:
         raise credentials_error
+
     if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is inactive")
+        raise HTTPException(
+            status_code=403,
+            detail="User is inactive",
+        )
+
+    if user.role.value != token_role:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication role is no longer valid",
+            headers={
+                "WWW-Authenticate": "Bearer",
+            },
+        )
+
     return user
 
 
-def get_current_active_user(user: User = Depends(get_current_user)) -> User:
+def get_current_active_user(
+    user: User = Depends(get_current_user),
+) -> User:
     return user

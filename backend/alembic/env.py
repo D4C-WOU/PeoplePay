@@ -9,7 +9,6 @@ from app.core.config import settings
 from app.db.base import Base
 from app import models
 
-
 config = context.config
 
 if config.config_file_name is not None:
@@ -31,9 +30,7 @@ def run_migrations_offline() -> None:
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
-        dialect_opts={
-            "paramstyle": "named"
-        },
+        dialect_opts={"paramstyle": "named"},
     )
 
     with context.begin_transaction():

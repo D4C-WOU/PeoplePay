@@ -4,10 +4,6 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_active_user
 from app.core.permissions import require_permission
 from app.db.database import get_db
-from app.models.time_off import (
-    TimeOffRequest,
-    TimeOffStatus,
-)
 from app.schemas.time_off import (
     AllocationCreate,
     AllocationResponse,
@@ -16,6 +12,7 @@ from app.schemas.time_off import (
     TimeOffTypeCreate,
     TimeOffTypeResponse,
 )
+from app.models.time_off import TimeOffStatus
 from app.services import time_off_service
 
 router = APIRouter(
@@ -24,24 +21,21 @@ router = APIRouter(
 )
 
 
-def _is_employee(user) -> bool:
-    return user.role.value == "EMPLOYEE"
-
-
 @router.get(
     "/types",
     response_model=list[TimeOffTypeResponse],
 )
 def list_types(
+    active_only: bool = False,
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "timeoff:read",
-    )
+    require_permission(user, "timeoff:read")
 
-    return time_off_service.list_types(db)
+    return time_off_service.list_time_off_types(
+        db,
+        active_only,
+    )
 
 
 @router.post(
@@ -54,22 +48,18 @@ def create_type(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "timeoff:write",
-    )
+    require_permission(user, "timeoff:write")
 
     try:
-        return time_off_service.create_type(
+        return time_off_service.create_time_off_type(
             db,
             data.model_dump(),
         )
-
     except ValueError as exc:
         raise HTTPException(
             status_code=409,
             detail=str(exc),
-        ) from exc
+        )
 
 
 @router.get(
@@ -82,17 +72,7 @@ def list_allocations(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    if _is_employee(user):
-        if user.employee is None:
-            return []
-
-        employee_id = user.employee.id
-
-    else:
-        require_permission(
-            user,
-            "timeoff:read",
-        )
+    require_permission(user, "timeoff:read")
 
     return time_off_service.list_allocations(
         db,
@@ -111,22 +91,18 @@ def create_allocation(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(
-        user,
-        "timeoff:write",
-    )
+    require_permission(user, "timeoff:write")
 
     try:
         return time_off_service.create_allocation(
             db,
             data.model_dump(),
         )
-
     except ValueError as exc:
         raise HTTPException(
             status_code=409,
             detail=str(exc),
-        ) from exc
+        )
 
 
 @router.get(
@@ -139,17 +115,7 @@ def list_requests(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    if _is_employee(user):
-        if user.employee is None:
-            return []
-
-        employee_id = user.employee.id
-
-    else:
-        require_permission(
-            user,
-            "timeoff:read",
-        )
+    require_permission(user, "timeoff:read")
 
     return time_off_service.list_requests(
         db,
@@ -168,81 +134,41 @@ def create_request(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    if _is_employee(user):
-        if user.employee is None or data.employee_id != user.employee.id:
-            raise HTTPException(
-                status_code=403,
-                detail="Access denied",
-            )
-    else:
-        require_permission(
-            user,
-            "timeoff:write",
-        )
+    require_permission(user, "timeoff:write")
 
     try:
         return time_off_service.create_request(
             db,
             data.model_dump(),
         )
-
     except ValueError as exc:
         raise HTTPException(
             status_code=409,
             detail=str(exc),
-        ) from exc
+        )
 
 
-def _transition(
+@router.get(
+    "/requests/{request_id}",
+    response_model=TimeOffRequestResponse,
+)
+def get_request(
     request_id: str,
-    target: TimeOffStatus,
-    user,
-    db: Session,
+    user=Depends(get_current_active_user),
+    db: Session = Depends(get_db),
 ):
-    request = db.get(
-        TimeOffRequest,
-        request_id,
-    )
-
-    if request is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Time-off request not found",
-        )
-
-    # Employees may only cancel their own requests.
-    if _is_employee(user):
-        if target != TimeOffStatus.CANCELLED:
-            raise HTTPException(
-                status_code=403,
-                detail="Access denied",
-            )
-
-        if user.employee is None or request.employee_id != user.employee.id:
-            raise HTTPException(
-                status_code=403,
-                detail="Access denied",
-            )
-
-    else:
-        require_permission(
-            user,
-            "timeoff:write",
-        )
+    require_permission(user, "timeoff:read")
 
     try:
-        return time_off_service.transition(
-            db=db,
-            request=request,
-            target=target,
-            reviewer_id=user.id,
+        return time_off_service.get_request(
+            db,
+            request_id,
         )
-
     except ValueError as exc:
         raise HTTPException(
-            status_code=409,
+            status_code=404,
             detail=str(exc),
-        ) from exc
+        )
 
 
 @router.post(
@@ -254,12 +180,19 @@ def approve_request(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    return _transition(
-        request_id,
-        TimeOffStatus.APPROVED,
-        user,
-        db,
-    )
+    require_permission(user, "timeoff:write")
+
+    try:
+        return time_off_service.approve_request(
+            db,
+            request_id,
+            str(user.id),
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        )
 
 
 @router.post(
@@ -271,12 +204,19 @@ def reject_request(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    return _transition(
-        request_id,
-        TimeOffStatus.REJECTED,
-        user,
-        db,
-    )
+    require_permission(user, "timeoff:write")
+
+    try:
+        return time_off_service.reject_request(
+            db,
+            request_id,
+            str(user.id),
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        )
 
 
 @router.post(
@@ -288,9 +228,15 @@ def cancel_request(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    return _transition(
-        request_id,
-        TimeOffStatus.CANCELLED,
-        user,
-        db,
-    )
+    require_permission(user, "timeoff:write")
+
+    try:
+        return time_off_service.cancel_request(
+            db,
+            request_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        )
