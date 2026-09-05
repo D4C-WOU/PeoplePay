@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -8,10 +10,12 @@ from app.models.attendance import (
 )
 from app.models.employee import Employee
 from app.models.work_schedule import WorkSchedule
+from app.schemas.pagination import Page
 from app.utils.calculations import (
     calculate_overtime,
     calculate_worked_hours,
 )
+from app.utils.pagination import paginate_scalars
 
 
 def _validate_employee(
@@ -147,7 +151,9 @@ def list_attendance(
     start_date=None,
     end_date=None,
     status: AttendanceStatus | None = None,
-) -> list[AttendanceRecord]:
+    page: int | None = None,
+    page_size: int = 10,
+) -> list[AttendanceRecord] | Page[AttendanceRecord]:
     if start_date is not None and end_date is not None and end_date < start_date:
         raise ValueError("end_date cannot be before start_date")
 
@@ -167,6 +173,9 @@ def list_attendance(
 
     if status is not None:
         stmt = stmt.where(AttendanceRecord.status == status)
+
+    if page is not None:
+        return paginate_scalars(db, stmt, page, page_size)
 
     return list(db.scalars(stmt).all())
 

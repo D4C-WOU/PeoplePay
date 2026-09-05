@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
@@ -15,6 +15,7 @@ from app.schemas.attendance import (
     AttendanceResponse,
     AttendanceUpdate,
 )
+from app.schemas.pagination import Page
 from app.services import attendance_service
 
 router = APIRouter(
@@ -41,7 +42,7 @@ def _verify_employee_access(
 
 @router.get(
     "",
-    response_model=list[AttendanceResponse],
+    response_model=list[AttendanceResponse] | Page[AttendanceResponse],
 )
 def list_records(
     employee_id: str | None = None,
@@ -49,11 +50,15 @@ def list_records(
     start_date: date | None = None,
     end_date: date | None = None,
     status: AttendanceStatus | None = None,
+    page: int | None = Query(default=None, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
     if _is_employee(user):
         if user.employee is None:
+            if page is not None:
+                return Page(items=[], total=0, page=page, page_size=page_size, pages=0)
             return []
 
         employee_id = user.employee.id
@@ -72,6 +77,8 @@ def list_records(
             start_date=start_date,
             end_date=end_date,
             status=status,
+            page=page,
+            page_size=page_size,
         )
 
     except ValueError as exc:

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
@@ -10,6 +10,7 @@ from app.schemas.employee import (
     EmployeeResponse,
     EmployeeUpdate,
 )
+from app.schemas.pagination import Page
 from app.services import employee_service
 
 router = APIRouter(
@@ -18,10 +19,13 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=list[EmployeeResponse])
+@router.get("", response_model=list[EmployeeResponse] | Page[EmployeeResponse])
 def list_employees(
     department_id: str | None = None,
     status: EmployeeStatus | None = None,
+    q: str | None = None,
+    page: int | None = Query(default=None, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -31,6 +35,9 @@ def list_employees(
         db=db,
         department_id=department_id,
         status=status,
+        q=q,
+        page=page,
+        page_size=page_size,
     )
 
 

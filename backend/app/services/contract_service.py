@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date
 
 from sqlalchemy import select
@@ -8,6 +10,8 @@ from app.models.contract import Contract, ContractStatus
 from app.models.employee import Employee, EmployeeStatus
 from app.models.salary_structure import SalaryStructure
 from app.models.work_schedule import WorkSchedule
+from app.schemas.pagination import Page
+from app.utils.pagination import paginate_scalars
 
 
 def get_contract(
@@ -26,7 +30,9 @@ def list_contracts(
     db: Session,
     employee_id: str | None = None,
     status: ContractStatus | None = None,
-) -> list[Contract]:
+    page: int | None = None,
+    page_size: int = 10,
+) -> list[Contract] | Page[Contract]:
     stmt = select(Contract)
 
     if employee_id is not None:
@@ -42,6 +48,9 @@ def list_contracts(
     stmt = stmt.order_by(
         Contract.start_date.desc()
     )
+
+    if page is not None:
+        return paginate_scalars(db, stmt, page, page_size)
 
     return list(db.scalars(stmt).all())
 

@@ -127,3 +127,84 @@ def ensure_no_overlapping_active_contract(
 
         if overlaps:
             raise ValueError("Employee already has an overlapping active contract")
+
+
+def validate_payrun(db: Session, payrun) -> dict:
+    from app.models.attendance import AttendanceRecord, AttendanceStatus
+    from app.models.payslip import Payslip
+
+    warnings = []
+    employee_ids = payrun.selected_employee_ids or []
+    employees = (
+        list(db.scalars(select(Employee).where(Employee.id.in_(employee_ids))).all())
+        if employee_ids
+        else []
+    )
+    for employee in employees:
+        missing_bank = (
+            not employee.bank_name
+            or not employee.bank_account_number
+            or not employee.bank_ifsc
+        )
+        if missing_bank:
+            warnings.append(
+                {
+                    "employee_id": employee.id,
+                    "employee_number": employee.employee_number,
+                    "type": "MISSING_BANK_DETAILS",
+                    "message": "Bank details are incomplete.",
+                }
+            )
+        duplicate = db.scalar(
+            select(Payslip).where(
+                Payslip.payrun_id == payrun.id, Payslip.employee_id == employee.id
+            )
+        )
+        if duplicate is not None:
+            warnings.append(
+                {
+                    "employee_id": employee.id,
+                    "employee_number": employee.employee_number,
+                    "type": "DUPLICATE_PAYSLIP",
+                    "message": "A payslip already exists for this employee in this payrun.",
+                }
+            )
+        contract = db.scalar(
+            select(Contract)
+            .where(
+                Contract.employee_id == employee.id,
+                Contract.status == ContractStatus.ACTIVE,
+                Contract.start_date <= payrun.period_end,
+                Contract.end_date.is_(None)
+                | (Contract.end_date >= payrun.period_start),
+            )
+            .order_by(Contract.start_date.desc())
+        )
+        if contract is None:
+            warnings.append(
+                {
+                    "employee_id": employee.id,
+                    "employee_number": employee.employee_number,
+                    "type": "MISSING_CONTRACT",
+                    "message": "No active contract covers the payrun period.",
+                }
+            )
+        elif (
+            payrun.salary_structure_id
+            and contract.salary_structure_id != payrun.salary_structure_id
+        ):
+            warnings.append(
+                {
+                    "employee_id": employee.id,
+                    "employee_number": employee.employee_number,
+                    "type": "SALARY_STRUCTURE_MISMATCH",
+                    "message": "Employee contract uses a different salary structure.",
+                }
+            )
+
+    return {
+        "payrun_id": payrun.id,
+        "valid": not warnings,
+        "warning_count": len(warnings),
+        "warnings": warnings,
+    }

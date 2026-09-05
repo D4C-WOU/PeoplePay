@@ -1,9 +1,12 @@
-from sqlalchemy import select
+from __future__ import annotations
+
+from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from sqlalchemy import select
 from app.models.employee import Employee, EmployeeStatus
 from app.models.user import User, UserRole
+from app.schemas.pagination import Page
+from app.utils.pagination import paginate_scalars
 
 
 def get_employee(
@@ -26,7 +29,10 @@ def list_employees(
     db: Session,
     department_id: str | None = None,
     status: EmployeeStatus | None = None,
-) -> list[Employee]:
+    q: str | None = None,
+    page: int | None = None,
+    page_size: int = 10,
+) -> list[Employee] | Page[Employee]:
 
     stmt = select(Employee).order_by(Employee.created_at.desc())
 
@@ -35,6 +41,20 @@ def list_employees(
 
     if status is not None:
         stmt = stmt.where(Employee.status == status)
+
+    if q:
+        term = f"%{q.strip()}%"
+        stmt = stmt.where(
+            or_(
+                Employee.first_name.ilike(term),
+                Employee.last_name.ilike(term),
+                Employee.employee_number.ilike(term),
+                Employee.email.ilike(term),
+            )
+        )
+
+    if page is not None:
+        return paginate_scalars(db, stmt, page, page_size)
 
     return list(db.scalars(stmt).all())
 
@@ -72,6 +92,20 @@ def _validate_user_for_employee(
     return user
 
 
+def _validate_manager(
+    db: Session, employee_id: str | None, manager_id: str | None
+) -> None:
+    if manager_id is None:
+        return
+    if employee_id is not None and manager_id == employee_id:
+        raise ValueError("An employee cannot be their own manager")
+    manager = db.get(Employee, manager_id)
+    if manager is None:
+        raise ValueError("Manager employee not found")
+    if manager.status == EmployeeStatus.TERMINATED:
+        raise ValueError("A terminated employee cannot be a manager")
+
+
 def create_employee(
     db: Session,
     data: dict,
@@ -84,6 +118,8 @@ def create_employee(
             db,
             user_id,
         )
+
+    _validate_manager(db, None, data.get("manager_id"))
 
     employee_number = data.get("employee_number")
 
@@ -133,6 +169,8 @@ def update_employee(
     )
 
     updates = dict(data)
+
+    _validate_manager(db, employee.id, updates.get("manager_id", employee.manager_id))
 
     new_user_id = updates.get("user_id")
 

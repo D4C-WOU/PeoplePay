@@ -1,6 +1,6 @@
 from io import BytesIO
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -8,6 +8,7 @@ from app.api.deps import get_current_active_user
 from app.core.permissions import require_permission
 from app.db.database import get_db
 from app.models.payslip import PayslipStatus
+from app.schemas.pagination import Page
 from app.schemas.payslip import PayslipResponse
 from app.services import payslip_service
 from app.services.pdf_service import generate_payslip_pdf
@@ -36,17 +37,21 @@ def _verify_employee_access(
 
 @router.get(
     "",
-    response_model=list[PayslipResponse],
+    response_model=list[PayslipResponse] | Page[PayslipResponse],
 )
 def list_payslips(
     employee_id: str | None = None,
     payrun_id: str | None = None,
     status: PayslipStatus | None = None,
+    page: int | None = Query(default=None, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
     if _is_employee(user):
         if user.employee is None:
+            if page is not None:
+                return Page(items=[], total=0, page=page, page_size=page_size, pages=0)
             return []
 
         employee_id = user.employee.id
@@ -62,6 +67,8 @@ def list_payslips(
         employee_id=employee_id,
         payrun_id=payrun_id,
         status=status,
+        page=page,
+        page_size=page_size,
     )
 
 

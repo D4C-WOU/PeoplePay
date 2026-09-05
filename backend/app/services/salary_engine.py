@@ -57,7 +57,7 @@ def _safe_formula(
             continue
 
         if isinstance(node, ast.Name):
-            if node.id not in _ALLOWED_NAMES:
+            if node.id not in _ALLOWED_NAMES and node.id not in variables:
                 raise ValueError(f"Unsupported formula variable: {node.id}")
             continue
 
@@ -66,8 +66,18 @@ def _safe_formula(
                 raise ValueError("Unsupported formula operator")
             continue
 
+        if isinstance(node, ast.operator):
+            if not isinstance(node, _ALLOWED_BINOPS):
+                raise ValueError("Unsupported formula operator")
+            continue
+
         if isinstance(node, ast.UnaryOp):
             if not isinstance(node.op, _ALLOWED_UNARY):
+                raise ValueError("Unsupported formula operator")
+            continue
+
+        if isinstance(node, ast.unaryop):
+            if not isinstance(node, _ALLOWED_UNARY):
                 raise ValueError("Unsupported formula operator")
             continue
 
@@ -124,8 +134,8 @@ def calculate_salary(
 
     values = {
         "base_salary": base_salary,
-        "gross": base_salary,
-        "total_earnings": base_salary,
+        "gross": Decimal("0"),
+        "total_earnings": Decimal("0"),
         "total_deductions": Decimal("0"),
         "total_tax": Decimal("0"),
         "worked_days": worked_days,
@@ -154,7 +164,12 @@ def calculate_salary(
             if rate < Decimal("0"):
                 raise ValueError(f"Percentage cannot be negative: {rule.code}")
 
-            amount = values["gross"] * rate / Decimal("100")
+            basis_name = rule.based_on or "base_salary"
+            if basis_name not in values:
+                raise ValueError(
+                    f"Unsupported percentage base for {rule.code}: {basis_name}"
+                )
+            amount = values[basis_name] * rate / Decimal("100")
 
         elif rule.calculation_type == CalculationType.FORMULA:
             amount = _safe_formula(
@@ -202,6 +217,8 @@ def calculate_salary(
                 "sequence": rule.sequence,
             }
         )
+
+        values[rule.code] = amount
 
     values["gross"] = money(values["total_earnings"])
 

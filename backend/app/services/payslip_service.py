@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -5,6 +7,8 @@ from app.models.payslip import (
     Payslip,
     PayslipStatus,
 )
+from app.schemas.pagination import Page
+from app.utils.pagination import paginate_scalars
 
 
 def list_payslips(
@@ -12,7 +16,9 @@ def list_payslips(
     employee_id: str | None = None,
     payrun_id: str | None = None,
     status: PayslipStatus | None = None,
-):
+    page: int | None = None,
+    page_size: int = 10,
+) -> list[Payslip] | Page[Payslip]:
     stmt = (
         select(Payslip)
         .options(selectinload(Payslip.lines))
@@ -27,6 +33,9 @@ def list_payslips(
 
     if status:
         stmt = stmt.where(Payslip.status == status)
+
+    if page is not None:
+        return paginate_scalars(db, stmt, page, page_size)
 
     return list(db.scalars(stmt).unique().all())
 

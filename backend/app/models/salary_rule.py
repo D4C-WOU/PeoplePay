@@ -1,5 +1,6 @@
 import enum
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Boolean,
@@ -15,6 +16,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDMixin
+
+if TYPE_CHECKING:
+    from app.models.payslip_line import PayslipLine
+    from app.models.salary_structure import SalaryStructure
 
 
 class SalaryRuleCategory(str, enum.Enum):
@@ -78,6 +83,11 @@ class SalaryRule(UUIDMixin, TimestampMixin, Base):
 
     percentage: Mapped[Decimal | None] = mapped_column(
         Numeric(8, 4),
+        nullable=True,
+    )
+
+    based_on: Mapped[str | None] = mapped_column(
+        String(50),
         nullable=True,
     )
 

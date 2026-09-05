@@ -3,6 +3,7 @@ from app.models.department import Department
 from app.models.employee import Employee
 from app.models.contract import Contract
 from app.models.work_schedule import WorkSchedule
+from app.models.work_schedule_day import WorkScheduleDay, DayOfWeek
 from app.models.attendance import AttendanceRecord
 from app.models.time_off import (
     TimeOffType,
@@ -21,6 +22,8 @@ __all__ = [
     "Employee",
     "Contract",
     "WorkSchedule",
+    "WorkScheduleDay",
+    "DayOfWeek",
     "AttendanceRecord",
     "TimeOffType",
     "TimeOffAllocation",

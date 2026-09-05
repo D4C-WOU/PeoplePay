@@ -19,13 +19,14 @@ from app.models.user import (
 )
 
 from app.models.department import Department
-from app.models.employee import Employee, EmployeeStatus
+from app.models.employee import Employee, EmployeeStatus, EmployeeType
 from app.models.work_schedule import WorkSchedule
+from app.models.work_schedule_day import WorkScheduleDay, DayOfWeek
 from app.models.salary_structure import SalaryStructure
 from app.models.salary_rule import (
     SalaryRule,
     SalaryRuleCategory,
-    SalaryRuleCalculationType,
+    CalculationType,
 )
 from app.models.contract import (
     Contract,
@@ -147,6 +148,38 @@ SCHEDULES = [
         "sunday_hours": Decimal("0"),
         "expected_daily_hours": Decimal("8"),
         "is_active": True,
+        "days": [
+            {
+                "day_of_week": DayOfWeek.MONDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.TUESDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.WEDNESDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.THURSDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.FRIDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+        ],
     },
     {
         "name": "Standard 6 Day",
@@ -160,6 +193,44 @@ SCHEDULES = [
         "sunday_hours": Decimal("0"),
         "expected_daily_hours": Decimal("8"),
         "is_active": True,
+        "days": [
+            {
+                "day_of_week": DayOfWeek.MONDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.TUESDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.WEDNESDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.THURSDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.FRIDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+            {
+                "day_of_week": DayOfWeek.SATURDAY,
+                "start_time": time(9, 0),
+                "end_time": time(18, 0),
+                "break_minutes": 60,
+            },
+        ],
     },
 ]
 
@@ -184,9 +255,10 @@ SALARY_RULES = [
         "code": "BASIC",
         "name": "Basic Salary",
         "category": SalaryRuleCategory.EARNING,
-        "calculation_type": SalaryRuleCalculationType.PERCENTAGE,
+        "calculation_type": CalculationType.PERCENTAGE,
         "amount": None,
         "percentage": Decimal("50"),
+        "based_on": "base_salary",
         "formula": None,
         "sequence": 10,
         "is_active": True,
@@ -195,9 +267,10 @@ SALARY_RULES = [
         "code": "HRA",
         "name": "House Rent Allowance",
         "category": SalaryRuleCategory.EARNING,
-        "calculation_type": SalaryRuleCalculationType.PERCENTAGE,
+        "calculation_type": CalculationType.PERCENTAGE,
         "amount": None,
         "percentage": Decimal("20"),
+        "based_on": "BASIC",
         "formula": None,
         "sequence": 20,
         "is_active": True,
@@ -206,9 +279,10 @@ SALARY_RULES = [
         "code": "ALLOWANCE",
         "name": "Special Allowance",
         "category": SalaryRuleCategory.EARNING,
-        "calculation_type": SalaryRuleCalculationType.FIXED,
+        "calculation_type": CalculationType.FIXED,
         "amount": Decimal("5000"),
         "percentage": None,
+        "based_on": None,
         "formula": None,
         "sequence": 30,
         "is_active": True,
@@ -217,9 +291,10 @@ SALARY_RULES = [
         "code": "PF",
         "name": "Provident Fund",
         "category": SalaryRuleCategory.DEDUCTION,
-        "calculation_type": SalaryRuleCalculationType.PERCENTAGE,
+        "calculation_type": CalculationType.PERCENTAGE,
         "amount": None,
         "percentage": Decimal("12"),
+        "based_on": "gross",
         "formula": None,
         "sequence": 40,
         "is_active": True,
@@ -228,9 +303,10 @@ SALARY_RULES = [
         "code": "TAX",
         "name": "Income Tax",
         "category": SalaryRuleCategory.TAX,
-        "calculation_type": SalaryRuleCalculationType.PERCENTAGE,
+        "calculation_type": CalculationType.PERCENTAGE,
         "amount": None,
         "percentage": Decimal("5"),
+        "based_on": "gross",
         "formula": None,
         "sequence": 50,
         "is_active": True,
@@ -461,7 +537,12 @@ def seed_schedules(db: Session) -> None:
         if existing:
             continue
 
-        db.add(WorkSchedule(**data))
+        schedule_data = dict(data)
+        days = schedule_data.pop("days", [])
+        schedule = WorkSchedule(**schedule_data)
+        for day in days:
+            schedule.days.append(WorkScheduleDay(**day))
+        db.add(schedule)
 
     db.commit()
 
@@ -501,7 +582,7 @@ def seed_salary_data(db: Session) -> None:
 
         existing = db.scalar(
             select(SalaryRule).where(
-                SalaryRule.structure_id == monthly.id,
+                SalaryRule.salary_structure_id == monthly.id,
                 SalaryRule.code == data["code"],
             )
         )
@@ -511,7 +592,7 @@ def seed_salary_data(db: Session) -> None:
 
         db.add(
             SalaryRule(
-                structure_id=monthly.id,
+                salary_structure_id=monthly.id,
                 **data,
             )
         )
@@ -571,6 +652,13 @@ def seed_employees(db: Session) -> None:
             last_name=data["last_name"],
             email=data["email"],
             phone=data["phone"],
+            employee_type=data.get("employee_type", EmployeeType.FULL_TIME),
+            bank_name=data.get("bank_name", "PeoplePay Demo Bank"),
+            bank_account_number=data.get(
+                "bank_account_number", f"DEMO{data['employee_number'][-3:]}"
+            ),
+            bank_ifsc=data.get("bank_ifsc", "PEOP0000001"),
+            manager_id=data.get("manager_id"),
             date_of_birth=data["date_of_birth"],
             hire_date=data["hire_date"],
             termination_date=data["termination_date"],
@@ -862,43 +950,33 @@ def seed_time_off_requests(
 
 
 def seed_payrun(db: Session) -> None:
-
     existing = db.scalar(
         select(Payrun).where(
             Payrun.period_start == date(2026, 8, 1),
             Payrun.period_end == date(2026, 8, 31),
         )
     )
-
     if existing:
         return
 
-    payrun_data = {
-        "period_start": date(2026, 8, 1),
-        "period_end": date(2026, 8, 31),
-        "payment_date": date(2026, 9, 5),
-        "employee_count": 0,
-        "total_gross": Decimal("0"),
-        "total_deductions": Decimal("0"),
-        "total_tax": Decimal("0"),
-        "total_net": Decimal("0"),
-        "status": PayrunStatus.DRAFT,
-    }
+    monthly = get_by_code(db, SalaryStructure, "MONTHLY")
+    if monthly is None:
+        raise RuntimeError("MONTHLY salary structure missing")
 
-    # IMPORTANT:
-    # If your Payrun model has salary_structure_id after
-    # the migration, uncomment this:
-    #
-    # monthly = get_by_code(
-    #     db,
-    #     SalaryStructure,
-    #     "MONTHLY",
-    # )
-    #
-    # payrun_data["salary_structure_id"] = monthly.id
-
-    db.add(Payrun(**payrun_data))
-
+    employees = list(
+        db.scalars(
+            select(Employee).where(Employee.status == EmployeeStatus.ACTIVE)
+        ).all()
+    )
+    payrun = Payrun(
+        period_start=date(2026, 8, 1),
+        period_end=date(2026, 8, 31),
+        payment_date=date(2026, 9, 5),
+        salary_structure_id=monthly.id,
+        selected_employee_ids=[employee.id for employee in employees],
+        status=PayrunStatus.DRAFT,
+    )
+    db.add(payrun)
     db.commit()
 
 

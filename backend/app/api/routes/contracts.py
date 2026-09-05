@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user
@@ -10,6 +10,7 @@ from app.schemas.contract import (
     ContractResponse,
     ContractUpdate,
 )
+from app.schemas.pagination import Page
 from app.services import contract_service
 
 
@@ -21,11 +22,13 @@ router = APIRouter(
 
 @router.get(
     "",
-    response_model=list[ContractResponse],
+    response_model=list[ContractResponse] | Page[ContractResponse],
 )
 def list_contracts(
     employee_id: str | None = None,
     status: ContractStatus | None = None,
+    page: int | None = Query(default=None, ge=1),
+    page_size: int = Query(default=10, ge=1, le=100),
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
@@ -35,6 +38,8 @@ def list_contracts(
         db=db,
         employee_id=employee_id,
         status=status,
+        page=page,
+        page_size=page_size,
     )
 
 

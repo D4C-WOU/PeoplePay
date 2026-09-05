@@ -27,6 +27,12 @@ class SalaryRuleCreate(BaseModel):
         ge=0,
     )
 
+    based_on: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=50,
+    )
+
     formula: str | None = None
 
     sequence: int = Field(
@@ -74,6 +80,12 @@ class SalaryRuleUpdate(BaseModel):
     percentage: Decimal | None = Field(
         default=None,
         ge=0,
+    )
+
+    based_on: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=50,
     )
 
     formula: str | None = None

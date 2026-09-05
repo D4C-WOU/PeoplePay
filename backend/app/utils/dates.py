@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from typing import Iterator
 
 
 def daterange(start: date, end: date) -> Iterator[date]:
