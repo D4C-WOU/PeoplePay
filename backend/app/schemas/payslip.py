@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.payslip import PayslipStatus
 
@@ -33,4 +33,4 @@ class PayslipResponse(BaseModel):
     net_amount: Decimal
     status: PayslipStatus
     generated_at: datetime | None
-    lines: list[PayslipLineResponse] = []
+    lines: list[PayslipLineResponse] = Field(default_factory=list)

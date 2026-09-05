@@ -1,57 +1,224 @@
-from datetime import date
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models.attendance import AttendanceRecord, AttendanceStatus
+from app.models.attendance import (
+    AttendanceRecord,
+    AttendanceStatus,
+)
 from app.models.employee import Employee
 from app.models.work_schedule import WorkSchedule
-from app.utils.calculations import calculate_overtime, calculate_worked_hours
+from app.utils.calculations import (
+    calculate_overtime,
+    calculate_worked_hours,
+)
 
 
-def _validate_employee(db, employee_id):
-    if not db.get(Employee, employee_id):
+def _validate_employee(
+    db: Session,
+    employee_id: str,
+) -> Employee:
+    employee = db.get(
+        Employee,
+        employee_id,
+    )
+
+    if employee is None:
         raise ValueError("Employee not found")
 
+    return employee
 
-def create_attendance(db: Session, data: dict) -> AttendanceRecord:
-    _validate_employee(db, data["employee_id"])
-    if data.get("work_schedule_id") and not db.get(WorkSchedule, data["work_schedule_id"]):
+
+def _validate_schedule(
+    db: Session,
+    work_schedule_id: str | None,
+) -> None:
+    if work_schedule_id is None:
+        return
+
+    schedule = db.get(
+        WorkSchedule,
+        work_schedule_id,
+    )
+
+    if schedule is None:
         raise ValueError("Work schedule not found")
-    if db.scalar(select(AttendanceRecord).where(
-        AttendanceRecord.employee_id == data["employee_id"],
-        AttendanceRecord.attendance_date == data["attendance_date"],
-    )):
+
+    if not schedule.is_active:
+        raise ValueError("Work schedule is inactive")
+
+
+def _validate_hours(
+    expected_hours,
+    worked_hours,
+    overtime_hours,
+) -> None:
+    if expected_hours < 0:
+        raise ValueError("Expected hours cannot be negative")
+
+    if worked_hours < 0:
+        raise ValueError("Worked hours cannot be negative")
+
+    if overtime_hours < 0:
+        raise ValueError("Overtime hours cannot be negative")
+
+
+def create_attendance(
+    db: Session,
+    data: dict,
+) -> AttendanceRecord:
+    employee = _validate_employee(
+        db,
+        data["employee_id"],
+    )
+
+    if employee.status.value == "TERMINATED":
+        raise ValueError("Cannot create attendance for a terminated employee")
+
+    _validate_schedule(
+        db,
+        data.get("work_schedule_id"),
+    )
+
+    existing = db.scalar(
+        select(AttendanceRecord).where(
+            AttendanceRecord.employee_id == data["employee_id"],
+            AttendanceRecord.attendance_date == data["attendance_date"],
+        )
+    )
+
+    if existing is not None:
         raise ValueError("Attendance already exists for this employee/date")
-    worked = data.get("worked_hours")
-    if worked is None:
-        worked = calculate_worked_hours(data.get("check_in"), data.get("check_out"))
-    overtime = data.get("overtime_hours")
-    if overtime is None:
-        overtime = calculate_overtime(worked, data.get("expected_hours", 0))
-    data["worked_hours"], data["overtime_hours"] = worked, overtime
+
+    check_in = data.get("check_in")
+    check_out = data.get("check_out")
+
+    if check_in is not None and check_out is not None and check_out < check_in:
+        raise ValueError("check_out cannot be before check_in")
+
+    expected_hours = data.get(
+        "expected_hours",
+        0,
+    )
+
+    expected_hours = data.get(
+        "expected_hours",
+        0,
+    )
+
+    worked_hours = calculate_worked_hours(
+        check_in,
+        check_out,
+    )
+
+    overtime_hours = calculate_overtime(
+        worked_hours,
+        expected_hours,
+    )
+    _validate_hours(
+        expected_hours,
+        worked_hours,
+        overtime_hours,
+    )
+
+    data["expected_hours"] = expected_hours
+    data["worked_hours"] = worked_hours
+    data["overtime_hours"] = overtime_hours
+
     record = AttendanceRecord(**data)
+
     db.add(record)
-    db.commit()
-    db.refresh(record)
+
+    try:
+        db.commit()
+        db.refresh(record)
+
+    except IntegrityError:
+        db.rollback()
+        raise ValueError("Attendance already exists for this employee/date")
+
     return record
 
 
-def list_attendance(db: Session, employee_id=None, attendance_date=None, start_date=None, end_date=None, status=None):
+def list_attendance(
+    db: Session,
+    employee_id: str | None = None,
+    attendance_date=None,
+    start_date=None,
+    end_date=None,
+    status: AttendanceStatus | None = None,
+) -> list[AttendanceRecord]:
+    if start_date is not None and end_date is not None and end_date < start_date:
+        raise ValueError("end_date cannot be before start_date")
+
     stmt = select(AttendanceRecord).order_by(AttendanceRecord.attendance_date.desc())
-    if employee_id: stmt = stmt.where(AttendanceRecord.employee_id == employee_id)
-    if attendance_date: stmt = stmt.where(AttendanceRecord.attendance_date == attendance_date)
-    if start_date: stmt = stmt.where(AttendanceRecord.attendance_date >= start_date)
-    if end_date: stmt = stmt.where(AttendanceRecord.attendance_date <= end_date)
-    if status: stmt = stmt.where(AttendanceRecord.status == status)
-    return db.scalars(stmt).all()
+
+    if employee_id is not None:
+        stmt = stmt.where(AttendanceRecord.employee_id == employee_id)
+
+    if attendance_date is not None:
+        stmt = stmt.where(AttendanceRecord.attendance_date == attendance_date)
+
+    if start_date is not None:
+        stmt = stmt.where(AttendanceRecord.attendance_date >= start_date)
+
+    if end_date is not None:
+        stmt = stmt.where(AttendanceRecord.attendance_date <= end_date)
+
+    if status is not None:
+        stmt = stmt.where(AttendanceRecord.status == status)
+
+    return list(db.scalars(stmt).all())
 
 
-def update_attendance(db: Session, record: AttendanceRecord, data: dict) -> AttendanceRecord:
-    for k, v in data.items(): setattr(record, k, v)
-    if record.check_in and record.check_out and record.check_out < record.check_in:
+def update_attendance(
+    db: Session,
+    record: AttendanceRecord,
+    data: dict,
+) -> AttendanceRecord:
+    if "work_schedule_id" in data:
+        _validate_schedule(
+            db,
+            data["work_schedule_id"],
+        )
+
+    for field, value in data.items():
+        setattr(
+            record,
+            field,
+            value,
+        )
+
+    if (
+        record.check_in is not None
+        and record.check_out is not None
+        and record.check_out < record.check_in
+    ):
         raise ValueError("check_out cannot be before check_in")
+
     if "check_in" in data or "check_out" in data or "expected_hours" in data:
-        record.worked_hours = calculate_worked_hours(record.check_in, record.check_out)
-        record.overtime_hours = calculate_overtime(record.worked_hours, record.expected_hours)
-    db.commit(); db.refresh(record)
+        record.worked_hours = calculate_worked_hours(
+            record.check_in,
+            record.check_out,
+        )
+
+        record.overtime_hours = calculate_overtime(
+            record.worked_hours,
+            record.expected_hours,
+        )
+
+    _validate_hours(
+        record.expected_hours,
+        record.worked_hours,
+        record.overtime_hours,
+    )
+
+    try:
+        db.commit()
+        db.refresh(record)
+
+    except IntegrityError:
+        db.rollback()
+        raise ValueError("Attendance could not be updated")
+
     return record

@@ -14,6 +14,10 @@ class PayrunCreate(BaseModel):
     def valid_period(self):
         if self.period_end < self.period_start:
             raise ValueError("period_end cannot be before period_start")
+
+        if self.payment_date is not None and self.payment_date < self.period_start:
+            raise ValueError("payment_date cannot be before period_start")
+
         return self
 
 

@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 
-def daterange(start: date, end: date):
+def daterange(start: date, end: date) -> Iterator[date]:
     current = start
     while current <= end:
         yield current
