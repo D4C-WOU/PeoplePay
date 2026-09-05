@@ -119,13 +119,13 @@ export default function PayrunDetailPage() {
   if (!payrun) return null;
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title={`${payrun.period_start} → ${payrun.period_end}`}
         description={`${payrun.employee_count} employees selected`}
         actions={<StatusBadge status={payrun.status} />}
       />
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         {actionError && <ErrorBanner message={actionError} />}
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

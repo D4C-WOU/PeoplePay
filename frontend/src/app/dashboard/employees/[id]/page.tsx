@@ -12,9 +12,9 @@ export default function EditEmployeePage() {
   const { data: employee, loading, error } = useEmployee(params.id);
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header title="Edit employee" description={employee?.employee_number} />
-      <div className="flex-1 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 p-4 sm:p-6">
         <div className="mx-auto max-w-3xl">
           {loading && <LoadingBanner />}
           {error && <ErrorBanner message={error} />}

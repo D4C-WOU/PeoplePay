@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 
 type PaginationProps = {
@@ -25,37 +24,37 @@ export function Pagination({
   const end = Math.min(page * pageSize, total);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--pp-border)] bg-slate-50/60 px-4 py-3 text-sm text-slate-500">
+    <div className="table-pagination">
       <span>
         Showing{" "}
-        <span className="font-medium text-slate-700">
-          {start}-{end}
-        </span>{" "}
-        of <span className="font-medium text-slate-700">{total}</span>
+        <strong>
+          {start}–{end}
+        </strong>{" "}
+        of <strong>{total}</strong>
       </span>
-      <div className="flex items-center gap-2">
+      <div className="table-pagination-controls">
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon-sm"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
           aria-label="Previous page"
         >
-          <ChevronLeft className="size-4" />
+          <ChevronLeft />
         </Button>
-        <span className="min-w-20 text-center">
-          Page {page} of {Math.max(pages, 1)}
+        <span>
+          Page <strong>{page}</strong> of <strong>{Math.max(pages, 1)}</strong>
         </span>
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon-sm"
           disabled={pages === 0 || page >= pages}
           onClick={() => onPageChange(page + 1)}
           aria-label="Next page"
         >
-          <ChevronRight className="size-4" />
+          <ChevronRight />
         </Button>
       </div>
     </div>

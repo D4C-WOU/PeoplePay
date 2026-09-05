@@ -213,13 +213,13 @@ export default function TimeOffRequestsPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title="Time-Off Requests"
         description="Pending → Approved / Refused. Approvals reduce the employee's allocation."
         actions={<NewRequestDialog onCreated={reload} />}
       />
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="w-44">
             <SelectValue placeholder="Status" />

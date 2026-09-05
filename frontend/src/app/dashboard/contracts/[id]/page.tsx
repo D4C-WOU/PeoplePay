@@ -61,7 +61,7 @@ export default function ContractDetailPage() {
   if (!contract) return null;
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title={contract.contract_number}
         description={
@@ -86,7 +86,7 @@ export default function ContractDetailPage() {
           )
         }
       />
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         {actionError && <ErrorBanner message={actionError} />}
         <Card>
           <CardContent className="grid grid-cols-2 gap-4 sm:grid-cols-3">

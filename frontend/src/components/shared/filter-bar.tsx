@@ -16,28 +16,28 @@ type FilterBarProps = {
 export function FilterBar({
   search,
   onSearchChange,
-  searchPlaceholder = "Search records...",
+  searchPlaceholder = "Search records…",
   children,
   onClear,
   hasActiveFilters = false,
 }: FilterBarProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--pp-border)] bg-white p-2 shadow-[var(--pp-shadow-xs)]">
+    <div className="filter-bar">
       {onSearchChange && (
-        <div className="relative min-w-60 flex-1">
-          <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-slate-400" />
+        <div className="filter-search">
+          <Search />
           <Input
             value={search ?? ""}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder={searchPlaceholder}
-            className="border-transparent bg-slate-50 pl-9 focus-visible:border-[var(--pp-brand)] focus-visible:bg-white"
+            aria-label={searchPlaceholder}
           />
         </div>
       )}
-      {children}
+      {children && <div className="filter-controls">{children}</div>}
       {hasActiveFilters && onClear && (
         <Button type="button" variant="ghost" size="sm" onClick={onClear}>
-          <X /> Clear filters
+          <X /> Clear
         </Button>
       )}
     </div>

@@ -171,13 +171,13 @@ export default function AllocationsPage() {
   const typeName = (id: string) => types?.find((t) => t.id === id)?.name ?? id;
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title="Time-Off Allocations"
         description="Allocated vs. used balances — approved requests consume this automatically."
         actions={<NewAllocationDialog onCreated={reload} />}
       />
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         {error && <ErrorBanner message={error} />}
         {loading ? (
           <LoadingBanner label="Loading allocations…" />

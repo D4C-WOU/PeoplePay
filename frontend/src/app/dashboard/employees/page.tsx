@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Plus, Users } from "lucide-react";
 
 import { Header } from "@/components/layout/header";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -68,18 +68,18 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title="Employees"
         description="The central record for every hire — contracts, attendance and leave connect back here."
         actions={
-          <Button render={<Link href="/dashboard/employees/new" />}>
+          <Link href="/dashboard/employees/new" className={buttonVariants()}>
             <Plus /> New employee
-          </Button>
+          </Link>
         }
       />
 
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         <FilterBar
           search={query}
           onSearchChange={updateQuery}

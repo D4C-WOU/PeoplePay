@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+
 import { apiRequest } from "@/lib/api";
 import { clearToken, getToken, setToken } from "@/lib/auth";
 import type { LoginPayload, TokenResponse, User } from "@/types/auth";
@@ -23,11 +24,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   const refresh = React.useCallback(async () => {
     const token = getToken();
+
     if (!token) {
       setUser(null);
       setLoading(false);
       return;
     }
+
     try {
       const me = await apiRequest<User>("/auth/me");
       setUser(me);
@@ -40,10 +43,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   }, []);
 
   React.useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      void refresh();
-    }, 0);
-    return () => window.clearTimeout(timeout);
+    void refresh();
   }, [refresh]);
 
   React.useEffect(() => {
@@ -51,9 +51,14 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       setUser(null);
       router.replace("/login");
     };
+
     window.addEventListener("peoplepay:session-expired", handleSessionExpired);
+
     return () =>
-      window.removeEventListener("peoplepay:session-expired", handleSessionExpired);
+      window.removeEventListener(
+        "peoplepay:session-expired",
+        handleSessionExpired,
+      );
   }, [router]);
 
   const login = React.useCallback(async (payload: LoginPayload) => {
@@ -61,7 +66,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       method: "POST",
       body: payload,
     });
+
     setToken(res.access_token);
+
     const me = await apiRequest<User>("/auth/me");
     setUser(me);
     return me;

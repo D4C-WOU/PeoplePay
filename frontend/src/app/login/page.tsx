@@ -1,15 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Users2,
-  Clock4,
-  Wallet,
-  ShieldCheck,
   ArrowRight,
+  Check,
+  Clock4,
+  Eye,
+  EyeOff,
   Loader2,
+  ShieldCheck,
+  Users2,
+  Wallet,
 } from "lucide-react";
+
 import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 
@@ -17,17 +21,17 @@ const FEATURES = [
   {
     icon: Users2,
     title: "Employee management",
-    desc: "Profiles, contracts, and org structure in one connected view",
+    desc: "Profiles, contracts, and org structure in one connected view.",
   },
   {
     icon: Clock4,
     title: "Attendance & leave",
-    desc: "Schedules, check-ins, and leave balances tracked automatically",
+    desc: "Schedules, check-ins, and leave balances tracked automatically.",
   },
   {
     icon: Wallet,
     title: "Payroll engine",
-    desc: "Rule-based salary computation with audit-ready payslips",
+    desc: "Rule-based salary computation with audit-ready payslips.",
   },
 ];
 
@@ -41,17 +45,24 @@ const DEMO_ACCOUNTS = [
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
+  const emailId = useId();
+  const passwordId = useId();
+
   const [email, setEmail] = useState("admin@peoplepay.com");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (loading) return;
+
     setLoading(true);
     setError(null);
+
     try {
-      await login({ email, password });
+      await login({ email: email.trim(), password });
       router.replace("/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Invalid credentials");
@@ -61,148 +72,190 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[var(--pp-page-bg)]">
-      <div
-        className="relative hidden w-[480px] flex-col justify-between overflow-hidden p-11 lg:flex"
-        style={{
-          background:
-            "radial-gradient(1200px 600px at -10% -10%, #312e81 0%, transparent 55%), radial-gradient(900px 500px at 110% 110%, #9a3412 0%, transparent 50%), var(--pp-sidebar-bg)",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-0 opacity-[0.06] [background-image:linear-gradient(#fff_1px,transparent_1px),linear-gradient(90deg,#fff_1px,transparent_1px)] [background-size:36px_36px]" />
+    <main className="login-shell">
+      <section className="login-brand-panel" aria-label="PeoplePay360 overview">
+        <div className="login-brand-grid" aria-hidden="true" />
 
-        <div className="relative z-10">
-          <div className="mb-14 flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-2xl bg-white/10 text-sm font-bold text-white ring-1 ring-white/15">
-              P3
-            </div>
-            <span className="text-base font-semibold tracking-tight text-white">
-              PeoplePay360
-            </span>
+        <div className="login-brand-content">
+          <div className="login-brand-mark">
+            <span>P3</span>
           </div>
 
-          <h1 className="mb-4 text-[2.2rem] font-semibold leading-[1.15] tracking-tight text-white">
-            HR &amp; Payroll,
-            <br />
-            reimagined.
-          </h1>
-          <p className="mb-11 max-w-sm text-sm leading-relaxed text-white/55">
-            One connected platform for employee records, attendance, leave, and
-            payroll processing — with a full audit trail.
-          </p>
+          <div className="login-brand-copy">
+            <p className="login-kicker">PeoplePay360</p>
+            <h1>
+              HR &amp; payroll,
+              <br />
+              without the busywork.
+            </h1>
+            <p className="login-brand-description">
+              One connected workspace for employee records, attendance, leave,
+              and payroll processing—with the detail and control your team
+              needs.
+            </p>
+          </div>
 
-          <div className="space-y-5">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="flex gap-3.5">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/8 ring-1 ring-white/10">
-                  <f.icon className="size-4 text-white/80" />
+          <div className="login-feature-list">
+            {FEATURES.map(({ icon: Icon, title, desc }) => (
+              <div className="login-feature" key={title}>
+                <div className="login-feature-icon" aria-hidden="true">
+                  <Icon size={18} strokeWidth={1.8} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">{f.title}</p>
-                  <p className="mt-0.5 text-xs leading-relaxed text-white/45">
-                    {f.desc}
-                  </p>
+                  <h2>{title}</h2>
+                  <p>{desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative z-10 flex items-center gap-2 text-xs text-white/35">
-          <ShieldCheck className="size-3.5" />© {new Date().getFullYear()}{" "}
-          PeoplePay360 · Enterprise-grade security
+        <div className="login-security">
+          <ShieldCheck size={15} />
+          <span>Secure workspace access</span>
+          <span className="login-security-dot" aria-hidden="true" />
+          <span>© {new Date().getFullYear()} PeoplePay360</span>
         </div>
-      </div>
+      </section>
 
-      <div className="flex flex-1 items-center justify-center px-6 py-10">
-        <div className="w-full max-w-sm">
-          <div className="mb-8">
-            <div className="mb-6 flex items-center gap-2 lg:hidden">
-              <div className="flex size-8 items-center justify-center rounded-xl bg-[var(--pp-brand)] text-sm font-bold text-white">
-                P3
-              </div>
-              <span className="font-semibold text-slate-900">PeoplePay360</span>
-            </div>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-              Welcome back
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Sign in with your workspace credentials
-            </p>
+      <section className="login-form-panel">
+        <div className="login-form-wrap">
+          <div className="login-mobile-brand">
+            <div className="login-mobile-mark">P3</div>
+            <span>PeoplePay360</span>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Email
-              </label>
+          <div className="login-heading">
+            <div className="login-heading-badge">
+              <span className="login-status-dot" />
+              Workspace sign in
+            </div>
+            <h2>Welcome back</h2>
+            <p>Sign in to continue to your PeoplePay360 workspace.</p>
+          </div>
+
+          <form className="login-form" onSubmit={handleSubmit} noValidate>
+            <div className="login-field">
+              <label htmlFor={emailId}>Work email</label>
               <input
+                id={emailId}
+                name="email"
                 type="email"
+                inputMode="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-[var(--pp-border-strong)] bg-white px-3.5 py-2.5 text-sm shadow-[var(--pp-shadow-xs)] outline-none transition focus:border-[var(--pp-brand)] focus:ring-4 focus:ring-[var(--pp-brand-light)]"
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@company.com"
+                disabled={loading}
+                aria-invalid={Boolean(error)}
+                className="login-input"
               />
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Password
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-[var(--pp-border-strong)] bg-white px-3.5 py-2.5 text-sm shadow-[var(--pp-shadow-xs)] outline-none transition focus:border-[var(--pp-brand)] focus:ring-4 focus:ring-[var(--pp-brand-light)]"
-                placeholder="••••••••"
-              />
+            <div className="login-field">
+              <div className="login-label-row">
+                <label htmlFor={passwordId}>Password</label>
+              </div>
+              <div className="login-password-wrap">
+                <input
+                  id={passwordId}
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Enter your password"
+                  disabled={loading}
+                  aria-invalid={Boolean(error)}
+                  className="login-input login-password-input"
+                />
+                <button
+                  type="button"
+                  className="login-password-toggle"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-pressed={showPassword}
+                  disabled={loading}
+                >
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
             </div>
 
             {error && (
-              <div className="rounded-xl border border-[var(--pp-danger)]/25 bg-[var(--pp-danger-bg)] px-3.5 py-2.5 text-sm text-[var(--pp-danger)]">
-                {error}
+              <div className="login-error" role="alert" aria-live="polite">
+                <span className="login-error-icon">!</span>
+                <div>
+                  <strong>Sign in failed</strong>
+                  <p>{error}</p>
+                </div>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--pp-brand)] py-2.5 text-sm font-medium text-white shadow-[var(--pp-shadow-sm)] transition hover:bg-[var(--pp-brand-dark)] disabled:opacity-60"
-            >
+            <button className="login-submit" type="submit" disabled={loading}>
               {loading ? (
-                <Loader2 className="size-4 animate-spin" />
+                <>
+                  <Loader2 className="login-spinner" size={18} />
+                  Signing you in…
+                </>
               ) : (
                 <>
-                  Sign in <ArrowRight className="size-4" />
+                  Sign in
+                  <ArrowRight size={18} />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 rounded-2xl border border-[var(--pp-border)] bg-[var(--pp-brand-light)]/60 p-3.5">
-            <p className="mb-1 text-xs font-semibold text-slate-700">
-              Demo accounts
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc}
-                  type="button"
-                  onClick={() => setEmail(acc)}
-                  className="rounded-lg border border-[var(--pp-border-strong)] bg-white px-2 py-1 text-[11px] text-slate-600 hover:border-[var(--pp-brand)] hover:text-[var(--pp-brand)]"
-                >
-                  {acc}
-                </button>
-              ))}
+          <div className="login-demo">
+            <div className="login-demo-header">
+              <div>
+                <p className="login-demo-title">Quick demo access</p>
+                <p className="login-demo-subtitle">
+                  Pick a role to prefill the email address.
+                </p>
+              </div>
+              <span className="login-demo-count">{DEMO_ACCOUNTS.length}</span>
             </div>
-            <p className="mt-2 text-[11px] text-slate-400">
-              All passwords end with @123
+
+            <div className="login-demo-list">
+              {DEMO_ACCOUNTS.map((account) => {
+                const active = email === account;
+                return (
+                  <button
+                    key={account}
+                    type="button"
+                    className={`login-demo-account${active ? " is-active" : ""}`}
+                    onClick={() => {
+                      setEmail(account);
+                      setError(null);
+                    }}
+                    disabled={loading}
+                  >
+                    <span className="login-demo-check" aria-hidden="true">
+                      {active && <Check size={13} strokeWidth={2.5} />}
+                    </span>
+                    <span>{account}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="login-demo-note">
+              Demo passwords end with <strong>@123</strong>.
             </p>
           </div>
+
+          <p className="login-form-footer">
+            By signing in, you agree to use this workspace only with authorized
+            credentials.
+          </p>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

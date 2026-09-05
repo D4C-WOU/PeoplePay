@@ -38,7 +38,7 @@ export default function ContractsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title="Contracts"
         description="Every employment term, historized — payroll only ever uses the one active for its period."
@@ -52,7 +52,7 @@ export default function ContractsPage() {
         }
       />
 
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         <FilterBar />
         <DataTable
           rows={contracts}

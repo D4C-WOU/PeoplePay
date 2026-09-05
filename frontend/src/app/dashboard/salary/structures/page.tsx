@@ -129,13 +129,13 @@ export default function SalaryStructuresPage() {
   const { data: structures, loading, error, reload } = useSalaryStructures();
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title="Salary Structures"
         description="Structures group the salary rules that drive payslip generation."
         actions={<NewStructureDialog onCreated={reload} />}
       />
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         <DataTable
           rows={structures ?? []}
           rowKey={(structure) => structure.id}

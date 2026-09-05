@@ -144,13 +144,13 @@ export default function TimeOffPage() {
   const { data: types, loading, error, reload } = useTimeOffTypes();
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title="Time Off"
         description="Configure leave types; allocations and requests live in their own tabs."
         actions={<NewTypeDialog onCreated={reload} />}
       />
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Card>
             <CardContent className="flex items-center justify-between pt-1">

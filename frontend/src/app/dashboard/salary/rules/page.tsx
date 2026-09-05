@@ -250,13 +250,13 @@ function SalaryRulesContent() {
   } = useSalaryRules(structureId || undefined);
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title="Salary Rules"
         description="Rules execute in sequence to compute gross, deductions, and net pay."
         actions={<NewRuleDialog structureId={structureId} onCreated={reload} />}
       />
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         <Select value={structureId} onValueChange={setStructureId}>
           <SelectTrigger className="w-64">
             <SelectValue placeholder="Select a salary structure" />

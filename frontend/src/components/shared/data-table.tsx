@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 
 import {
   Table,
@@ -11,7 +12,6 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
 import { Pagination } from "@/components/shared/pagination";
-import type { LucideIcon } from "lucide-react";
 
 type DataTableColumn<T> = {
   key: string;
@@ -53,8 +53,9 @@ export function DataTable<T>({
   onPageChange,
   onRowClick,
 }: DataTableProps<T>) {
-  if (loading) return <LoadingBanner label="Loading records..." />;
-  if (error) return <ErrorBanner message={error} />;
+  if (loading && !rows.length)
+    return <LoadingBanner label="Loading records…" />;
+  if (error && !rows.length) return <ErrorBanner message={error} />;
   if (!rows.length) {
     return (
       <EmptyState
@@ -66,49 +67,50 @@ export function DataTable<T>({
   }
 
   return (
-    <div className="app-surface overflow-hidden">
-      <Table>
-        <TableHeader className="bg-slate-50/90">
-          <TableRow>
-            {columns.map((column) => (
-              <TableHead
-                key={column.key}
-                className={`text-[11px] font-semibold uppercase tracking-wide text-slate-500 ${column.className ?? ""}`}
-              >
-                {column.header}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow
-              key={rowKey(row)}
-              className={
-                onRowClick
-                  ? "cursor-pointer transition-colors hover:bg-[var(--pp-brand-soft)]"
-                  : undefined
-              }
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-              tabIndex={onRowClick ? 0 : undefined}
-              onKeyDown={
-                onRowClick
-                  ? (event) => {
-                      if (event.key === "Enter" || event.key === " ")
-                        onRowClick(row);
-                    }
-                  : undefined
-              }
-            >
+    <div className={`data-table-shell${loading ? " is-refreshing" : ""}`}>
+      {error && (
+        <div className="data-table-inline-error">
+          <ErrorBanner message={error} />
+        </div>
+      )}
+      <div className="data-table-scroll">
+        <Table>
+          <TableHeader>
+            <TableRow>
               {columns.map((column) => (
-                <TableCell key={column.key} className={column.className}>
-                  {column.render(row)}
-                </TableCell>
+                <TableHead key={column.key} className={column.className}>
+                  {column.header}
+                </TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow
+                key={rowKey(row)}
+                className={onRowClick ? "data-row-clickable" : undefined}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ")
+                          onRowClick(row);
+                      }
+                    : undefined
+                }
+              >
+                {columns.map((column) => (
+                  <TableCell key={column.key} className={column.className}>
+                    {column.render(row)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
       {page !== undefined &&
         pageSize !== undefined &&
         total !== undefined &&

@@ -105,13 +105,13 @@ export default function DepartmentsPage() {
   );
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="pp-page flex flex-1 flex-col">
       <Header
         title="Departments"
         description="Organize employees into the teams that drive workforce and payroll reporting."
         actions={<DepartmentDialog onCreated={reload} />}
       />
-      <div className="flex-1 space-y-4 p-4 sm:p-6">
+      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         <FilterBar
           search={query}
           onSearchChange={setQuery}
