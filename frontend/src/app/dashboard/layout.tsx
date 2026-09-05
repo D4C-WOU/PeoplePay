@@ -260,7 +260,11 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        <div className="dashboard-content">{children}</div>
+        <div
+          className={`dashboard-content dashboard-route-${pathname.replace(/\//g, "-").replace(/^-|-$/g, "") || "overview"}`}
+        >
+          {children}
+        </div>
       </main>
     </div>
   );

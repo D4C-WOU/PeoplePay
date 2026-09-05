@@ -36,7 +36,13 @@ export function FilterBar({
       )}
       {children && <div className="filter-controls">{children}</div>}
       {hasActiveFilters && onClear && (
-        <Button type="button" variant="ghost" size="sm" onClick={onClear}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="filter-clear"
+          onClick={onClear}
+        >
           <X /> Clear
         </Button>
       )}

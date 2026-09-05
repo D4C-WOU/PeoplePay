@@ -172,6 +172,7 @@ textarea {
     opacity: 0;
     transform: translateY(5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -755,6 +756,7 @@ textarea {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -790,9 +792,9 @@ textarea {
   min-height: 100svh;
   color: var(--pp-sidebar-fg);
   background:
-    radial-gradient(480px 300px at 0% 0%, rgba(15,118,110,.18), transparent 62%),
+    radial-gradient(480px 300px at 0% 0%, rgba(15, 118, 110, .18), transparent 62%),
     linear-gradient(180deg, #1b3936 0%, #132725 72%);
-  border-right: 1px solid rgba(255,255,255,.07);
+  border-right: 1px solid rgba(255, 255, 255, .07);
   transition: width 150ms ease, flex-basis 150ms ease;
   overflow: hidden;
   z-index: 40;
@@ -835,7 +837,7 @@ textarea {
   font-size: 11px;
   font-weight: 850;
   letter-spacing: -.05em;
-  box-shadow: 0 6px 18px rgba(0,0,0,.16);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .16);
 }
 
 .dashboard-brand strong,
@@ -855,7 +857,7 @@ textarea {
 
 .dashboard-brand small {
   margin-top: 2px;
-  color: rgba(255,255,255,.38);
+  color: rgba(255, 255, 255, .38);
   font-size: 10px;
 }
 
@@ -868,12 +870,12 @@ textarea {
   border: 0;
   border-radius: 9px;
   background: transparent;
-  color: rgba(255,255,255,.42);
+  color: rgba(255, 255, 255, .42);
 }
 
 .dashboard-sidebar-toggle:hover,
 .dashboard-mobile-close:hover {
-  background: rgba(255,255,255,.07);
+  background: rgba(255, 255, 255, .07);
   color: white;
 }
 
@@ -896,7 +898,7 @@ textarea {
 
 .dashboard-nav-group {
   margin: 16px 9px 6px;
-  color: rgba(255,255,255,.27);
+  color: rgba(255, 255, 255, .27);
   font-size: 9px;
   font-weight: 800;
   letter-spacing: .14em;
@@ -915,7 +917,7 @@ textarea {
   min-height: 39px;
   padding: 0 10px;
   border-radius: 10px;
-  color: rgba(255,255,255,.57);
+  color: rgba(255, 255, 255, .57);
   text-decoration: none;
   font-size: 12px;
   font-weight: 600;
@@ -923,13 +925,13 @@ textarea {
 
 .dashboard-nav-item:hover {
   color: white;
-  background: rgba(255,255,255,.055);
+  background: rgba(255, 255, 255, .055);
 }
 
 .dashboard-nav-item.is-active {
   color: white;
-  background: linear-gradient(90deg, rgba(15,118,110,.95), rgba(15,118,110,.72));
-  box-shadow: 0 5px 14px rgba(0,0,0,.12);
+  background: linear-gradient(90deg, rgba(15, 118, 110, .95), rgba(15, 118, 110, .72));
+  box-shadow: 0 5px 14px rgba(0, 0, 0, .12);
 }
 
 .dashboard-nav-item.is-collapsed {
@@ -970,7 +972,7 @@ textarea {
   min-height: 31px;
   padding: 0 8px;
   border-radius: 7px;
-  color: rgba(255,255,255,.42);
+  color: rgba(255, 255, 255, .42);
   text-decoration: none;
   font-size: 11px;
 }
@@ -978,7 +980,7 @@ textarea {
 .dashboard-subnav-item:hover,
 .dashboard-subnav-item.is-active {
   color: white;
-  background: rgba(255,255,255,.06);
+  background: rgba(255, 255, 255, .06);
 }
 
 .dashboard-subnav-line {
@@ -1026,7 +1028,7 @@ textarea {
 
 .dashboard-account small {
   margin-top: 1px;
-  color: rgba(255,255,255,.38);
+  color: rgba(255, 255, 255, .38);
   font-size: 9px;
 }
 
@@ -1040,13 +1042,13 @@ textarea {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: rgba(255,255,255,.38);
+  color: rgba(255, 255, 255, .38);
   font-size: 11px;
   text-align: left;
 }
 
 .dashboard-signout:hover {
-  background: rgba(255,255,255,.055);
+  background: rgba(255, 255, 255, .055);
   color: white;
 }
 
@@ -1076,7 +1078,7 @@ textarea {
   gap: 16px;
   padding: 0 22px;
   border-bottom: 1px solid var(--pp-border);
-  background: rgba(255,255,255,.92);
+  background: rgba(255, 255, 255, .92);
   backdrop-filter: blur(12px);
 }
 
@@ -1171,12 +1173,15 @@ textarea {
   height: 7px;
   border-radius: 50%;
   background: var(--pp-brand);
-  box-shadow: 0 0 0 5px rgba(15,118,110,.09);
+  box-shadow: 0 0 0 5px rgba(15, 118, 110, .09);
   animation: dashboardPulse 1.2s ease-in-out infinite;
 }
 
 @keyframes dashboardPulse {
-  50% { opacity: .38; transform: scale(.82); }
+  50% {
+    opacity: .38;
+    transform: scale(.82);
+  }
 }
 
 .dashboard-overlay {
@@ -1184,21 +1189,21 @@ textarea {
   inset: 0;
   z-index: 35;
   border: 0;
-  background: rgba(12,28,27,.45);
+  background: rgba(12, 28, 27, .45);
   backdrop-filter: blur(2px);
 }
 
 .dashboard-page {
   min-height: 100%;
   background:
-    radial-gradient(circle at 100% 0%, rgba(15,118,110,.055), transparent 25%),
+    radial-gradient(circle at 100% 0%, rgba(15, 118, 110, .055), transparent 25%),
     var(--pp-page-bg);
 }
 
 .dashboard-hero {
   border-bottom: 1px solid var(--pp-border);
   background:
-    radial-gradient(700px 220px at 85% 0%, rgba(15,118,110,.08), transparent 65%),
+    radial-gradient(700px 220px at 85% 0%, rgba(15, 118, 110, .08), transparent 65%),
     linear-gradient(180deg, #eef5f0 0%, #eaf2ed 100%);
 }
 
@@ -1267,7 +1272,7 @@ textarea {
 .dashboard-primary-action {
   color: white;
   background: var(--pp-brand);
-  box-shadow: 0 6px 16px rgba(15,118,110,.17);
+  box-shadow: 0 6px 16px rgba(15, 118, 110, .17);
 }
 
 .dashboard-primary-action:hover {
@@ -1276,12 +1281,12 @@ textarea {
 
 .dashboard-secondary-action {
   border: 1px solid #cbd8d0;
-  background: rgba(255,255,255,.86);
+  background: rgba(255, 255, 255, .86);
   color: #29443f;
 }
 
 .dashboard-secondary-action:hover {
-  border-color: rgba(15,118,110,.42);
+  border-color: rgba(15, 118, 110, .42);
   color: var(--pp-brand);
 }
 
@@ -1307,7 +1312,7 @@ textarea {
   margin-bottom: 13px;
 }
 
-.dashboard-section-title > div > span {
+.dashboard-section-title>div>span {
   color: var(--pp-brand);
   font-size: 9px;
   font-weight: 850;
@@ -1324,7 +1329,7 @@ textarea {
   font-weight: 700;
 }
 
-.dashboard-section-title > a {
+.dashboard-section-title>a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1334,18 +1339,18 @@ textarea {
   font-weight: 750;
 }
 
-.dashboard-section-title > a:hover {
+.dashboard-section-title>a:hover {
   color: var(--pp-brand-dark);
 }
 
-.dashboard-section-title > a svg {
+.dashboard-section-title>a svg {
   width: 12px;
   height: 12px;
 }
 
 .dashboard-stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 11px;
 }
 
@@ -1402,10 +1407,25 @@ textarea {
   transform: translate(0, 0);
 }
 
-.dashboard-stat-teal .dashboard-stat-icon { background: #e6f4f1; color: #0f766e; }
-.dashboard-stat-clay .dashboard-stat-icon { background: #fff0e7; color: #bd5e32; }
-.dashboard-stat-gold .dashboard-stat-icon { background: #fff6dc; color: #a56b11; }
-.dashboard-stat-blue .dashboard-stat-icon { background: #e9f1f5; color: #2e6477; }
+.dashboard-stat-teal .dashboard-stat-icon {
+  background: #e6f4f1;
+  color: #0f766e;
+}
+
+.dashboard-stat-clay .dashboard-stat-icon {
+  background: #fff0e7;
+  color: #bd5e32;
+}
+
+.dashboard-stat-gold .dashboard-stat-icon {
+  background: #fff6dc;
+  color: #a56b11;
+}
+
+.dashboard-stat-blue .dashboard-stat-icon {
+  background: #e9f1f5;
+  color: #2e6477;
+}
 
 .dashboard-stat-label,
 .dashboard-stat-detail {
@@ -1450,7 +1470,7 @@ textarea {
   box-shadow: var(--pp-shadow-xs);
 }
 
-.dashboard-panel > .dashboard-section-title {
+.dashboard-panel>.dashboard-section-title {
   padding: 17px 18px 0;
 }
 
@@ -1463,9 +1483,7 @@ textarea {
   margin-bottom: 16px;
 }
 
-.dashboard-departments {
-  display: divide-y;
-}
+.dashboard-departments {}
 
 .dashboard-department {
   display: flex;
@@ -1580,7 +1598,7 @@ textarea {
   background: #fffaf1;
 }
 
-.dashboard-review-item > span:nth-child(2) {
+.dashboard-review-item>span:nth-child(2) {
   min-width: 0;
   flex: 1;
 }
@@ -1601,7 +1619,7 @@ textarea {
   font-size: 9px;
 }
 
-.dashboard-review-item > svg {
+.dashboard-review-item>svg {
   width: 13px;
   height: 13px;
   color: #9aa8a3;
@@ -1614,7 +1632,7 @@ textarea {
 
 .dashboard-shortcuts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -1636,7 +1654,7 @@ textarea {
   box-shadow: var(--pp-shadow-xs);
 }
 
-.dashboard-shortcut > span:first-child {
+.dashboard-shortcut>span:first-child {
   display: grid;
   place-items: center;
   width: 34px;
@@ -1647,12 +1665,12 @@ textarea {
   color: var(--pp-brand);
 }
 
-.dashboard-shortcut > span:first-child svg {
+.dashboard-shortcut>span:first-child svg {
   width: 15px;
   height: 15px;
 }
 
-.dashboard-shortcut > span:nth-child(2) {
+.dashboard-shortcut>span:nth-child(2) {
   min-width: 0;
   flex: 1;
 }
@@ -1676,7 +1694,7 @@ textarea {
   font-size: 9px;
 }
 
-.dashboard-shortcut > svg {
+.dashboard-shortcut>svg {
   width: 13px;
   height: 13px;
   color: #a2aea9;
@@ -1687,7 +1705,7 @@ textarea {
 .page-header {
   border-bottom: 1px solid var(--pp-border);
   background:
-    radial-gradient(550px 180px at 90% 0%, rgba(15,118,110,.06), transparent 70%),
+    radial-gradient(550px 180px at 90% 0%, rgba(15, 118, 110, .06), transparent 70%),
     #edf4ef;
 }
 
@@ -1759,7 +1777,9 @@ textarea {
 }
 
 @keyframes tableRefresh {
-  50% { opacity: .25; }
+  50% {
+    opacity: .25;
+  }
 }
 
 .data-table-scroll {
@@ -1806,7 +1826,7 @@ textarea {
 }
 
 .data-table-scroll tbody tr.data-row-clickable:focus-visible {
-  outline: 2px solid rgba(15,118,110,.35);
+  outline: 2px solid rgba(15, 118, 110, .35);
   outline-offset: -2px;
 }
 
@@ -1841,7 +1861,7 @@ textarea {
   gap: 7px;
 }
 
-.table-pagination-controls > span {
+.table-pagination-controls>span {
   min-width: 88px;
   text-align: center;
 }
@@ -1864,7 +1884,7 @@ textarea {
   flex: 1;
 }
 
-.filter-search > svg {
+.filter-search>svg {
   position: absolute;
   left: 11px;
   top: 50%;
@@ -1883,7 +1903,7 @@ textarea {
 }
 
 .filter-search input:focus {
-  border-color: rgba(15,118,110,.35);
+  border-color: rgba(15, 118, 110, .35);
   background: white;
 }
 
@@ -1923,12 +1943,12 @@ textarea {
 }
 
 .state-banner-error {
-  border-color: rgba(220,38,38,.14);
+  border-color: rgba(220, 38, 38, .14);
   background: var(--pp-danger-bg);
   color: var(--pp-danger);
 }
 
-.state-banner-error > svg {
+.state-banner-error>svg {
   width: 15px;
   height: 15px;
   flex: 0 0 auto;
@@ -1957,12 +1977,12 @@ textarea {
 [data-slot="select-trigger"]:focus-visible,
 [data-slot="textarea"]:focus-visible {
   border-color: var(--pp-brand);
-  box-shadow: 0 0 0 3px rgba(15,118,110,.09);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, .09);
 }
 
 @media (max-width: 1000px) {
   .dashboard-stat-grid {
-    grid-template-columns: repeat(2, minmax(0,1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-main-grid {
@@ -1970,7 +1990,7 @@ textarea {
   }
 
   .dashboard-shortcuts {
-    grid-template-columns: repeat(2, minmax(0,1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1981,7 +2001,7 @@ textarea {
     width: 258px;
     flex-basis: 258px;
     transform: translateX(-102%);
-    box-shadow: 18px 0 45px rgba(10,28,26,.16);
+    box-shadow: 18px 0 45px rgba(10, 28, 26, .16);
   }
 
   .dashboard-sidebar.is-mobile-open {
@@ -2112,5 +2132,390 @@ textarea {
 
   .dashboard-review-item {
     min-height: 54px;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* PeoplePay360 — HR / Payroll screen polish                                  */
+/* -------------------------------------------------------------------------- */
+.pp-page {
+  min-width: 0;
+}
+
+.pp-page-content {
+  max-width: 1480px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.pp-page-content>.filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+}
+
+/* Give all operational pages the same quiet, high-density rhythm. */
+.pp-page .app-surface {
+  box-shadow: 0 1px 2px rgba(23, 51, 48, .04), 0 8px 30px rgba(23, 51, 48, .035);
+}
+
+.pp-page .app-surface:hover {
+  box-shadow: 0 1px 2px rgba(23, 51, 48, .05), 0 12px 34px rgba(23, 51, 48, .055);
+}
+
+/* Tables */
+.pp-page table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.pp-page thead th {
+  height: 42px;
+  background: #f7faf8;
+  border-bottom: 1px solid var(--pp-border);
+}
+
+.pp-page tbody td {
+  height: 58px;
+  border-bottom-color: #edf2ee;
+}
+
+.pp-page tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.pp-page tbody tr:hover td {
+  background: rgba(230, 244, 241, .52);
+}
+
+.pp-page tbody td:first-child {
+  padding-left: 18px;
+}
+
+.pp-page tbody td:last-child {
+  padding-right: 18px;
+}
+
+/* Filters */
+.pp-page .filter-bar {
+  border-color: #dce7e1;
+  box-shadow: 0 1px 2px rgba(23, 51, 48, .035), 0 8px 24px rgba(23, 51, 48, .035);
+}
+
+.pp-page .filter-bar input {
+  min-height: 40px;
+}
+
+/* Status / compact controls */
+.pp-page [data-slot="badge"] {
+  font-weight: 650;
+  letter-spacing: .01em;
+}
+
+.pp-page button:not([data-slot="checkbox"]),
+.pp-page a[class*="rounded"] {
+  font-weight: 600;
+}
+
+/* Detail pages */
+.pp-page .grid>[data-slot="card"],
+.pp-page>.pp-page-content>[data-slot="card"] {
+  overflow: hidden;
+}
+
+.pp-page [data-slot="card-header"] {
+  border-bottom: 1px solid #edf2ee;
+}
+
+/* Settings */
+.settings-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+}
+
+.settings-intro-icon,
+.settings-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  color: var(--pp-brand);
+  background: var(--pp-brand-light);
+}
+
+.settings-intro-icon {
+  width: 38px;
+  height: 38px;
+}
+
+.settings-card-icon {
+  width: 36px;
+  height: 36px;
+  margin-bottom: 2px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.settings-card {
+  min-height: 150px;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+
+.settings-card:hover {
+  transform: translateY(-2px);
+  border-color: #cddfd7;
+}
+
+/* Payroll pages */
+.pp-page [data-slot="card"] .text-2xl {
+  letter-spacing: -.025em;
+}
+
+.pp-page .font-mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Avoid the old global feel of animated every-element transitions. */
+.pp-page a,
+.pp-page button,
+.pp-page input,
+.pp-page select,
+.pp-page textarea {
+  transition-duration: .14s;
+}
+
+@media (max-width: 900px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pp-page-content>.filter-bar {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .pp-page-content {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .pp-page table {
+    min-width: 720px;
+  }
+
+  .pp-page .data-table-scroll {
+    overflow-x: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .pp-page *,
+  .settings-card {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+
+/* -------------------------------------------------------------------------- */
+/* Final workspace pass — balanced gutters, robust filters, payroll parity    */
+/* -------------------------------------------------------------------------- */
+.dashboard-content {
+  padding: 0 28px 40px;
+}
+
+/* Keep the overview hero edge-to-edge; operational screens get a centered
+   content rail so they no longer hug the sidebar. */
+.dashboard-route-dashboard {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.dashboard-content>* {
+  width: min(100%, 1480px);
+  margin-inline: auto;
+}
+
+.dashboard-content>.dashboard-page {
+  width: 100%;
+}
+
+/* Filter bars should never allow controls or the Clear action to compress
+   into each other. Controls wrap as a unit before text is allowed to collide. */
+.filter-bar {
+  align-items: center;
+  min-width: 0;
+}
+
+.filter-search {
+  min-width: min(280px, 100%);
+  flex: 1 1 320px;
+}
+
+.filter-controls {
+  min-width: 0;
+  flex: 0 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+.filter-controls>* {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.filter-clear {
+  flex: 0 0 auto !important;
+  white-space: nowrap;
+}
+
+/* Give the dense operational modules a little more breathing room than the
+   older screens while retaining the compact enterprise-table feel. */
+.dashboard-route-employees,
+.dashboard-route-contracts,
+.dashboard-route-departments,
+.dashboard-route-attendance,
+.dashboard-route-time-off,
+.dashboard-route-work-schedules,
+.dashboard-route-users,
+.dashboard-route-settings,
+.dashboard-route-salary,
+.dashboard-route-salary-structures,
+.dashboard-route-salary-rules,
+.dashboard-route-payroll,
+.dashboard-route-payroll-payruns,
+.dashboard-route-payroll-payslips {
+  padding-top: 10px;
+}
+
+/* Payroll gets the same visual hierarchy as the rest of the workspace rather
+   than looking like a separate admin product. */
+.dashboard-route-payroll,
+.dashboard-route-payroll-payruns,
+.dashboard-route-payroll-payslips,
+.dashboard-route-salary,
+.dashboard-route-salary-structures,
+.dashboard-route-salary-rules {
+  color: var(--text);
+}
+
+.dashboard-route-payroll .app-surface,
+.dashboard-route-payroll-payruns .app-surface,
+.dashboard-route-payroll-payslips .app-surface,
+.dashboard-route-salary .app-surface,
+.dashboard-route-salary-structures .app-surface,
+.dashboard-route-salary-rules .app-surface {
+  border-color: #dbe5df;
+  box-shadow: 0 1px 2px rgba(23, 51, 48, .04), 0 10px 30px rgba(23, 51, 48, .035);
+}
+
+.dashboard-route-payroll .data-table-shell,
+.dashboard-route-payroll-payruns .data-table-shell,
+.dashboard-route-payroll-payslips .data-table-shell,
+.dashboard-route-salary-structures .data-table-shell,
+.dashboard-route-salary-rules .data-table-shell {
+  border-radius: 15px;
+}
+
+.dashboard-route-payroll-payruns .filter-bar,
+.dashboard-route-payroll-payslips .filter-bar,
+.dashboard-route-attendance .filter-bar,
+.dashboard-route-time-off .filter-bar {
+  margin-bottom: 2px;
+}
+
+/* Tables breathe horizontally on wide displays instead of presenting as a
+   narrow block stuck against the left rail. */
+.dashboard-route-payroll-payruns .data-table-scroll table,
+.dashboard-route-payroll-payslips .data-table-scroll table,
+.dashboard-route-attendance .data-table-scroll table,
+.dashboard-route-time-off .data-table-scroll table {
+  min-width: 760px;
+}
+
+/* Slightly stronger hierarchy for financial numbers. */
+.dashboard-route-payroll-payruns td,
+.dashboard-route-payroll-payslips td,
+.dashboard-route-salary-structures td,
+.dashboard-route-salary-rules td {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1180px) {
+  .dashboard-content {
+    padding-inline: 20px;
+  }
+
+  .filter-search {
+    flex-basis: 260px;
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-content {
+    padding-inline: 16px;
+    padding-bottom: 28px;
+  }
+
+  .dashboard-route-dashboard {
+    padding-inline: 0;
+  }
+
+  .filter-bar {
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .filter-search {
+    min-width: 100%;
+    flex-basis: 100%;
+  }
+
+  .filter-controls {
+    flex: 1 1 auto;
+  }
+
+  .filter-clear {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .dashboard-content {
+    padding-inline: 12px;
+  }
+
+  .dashboard-route-dashboard {
+    padding-inline: 0;
+  }
+
+  .filter-controls {
+    width: 100%;
+  }
+
+  .filter-controls>* {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .filter-controls [data-slot="select-trigger"] {
+    width: 100% !important;
+  }
+
+  .filter-clear {
+    margin-left: 0;
+    width: auto !important;
+    flex: 0 0 auto !important;
   }
 }
