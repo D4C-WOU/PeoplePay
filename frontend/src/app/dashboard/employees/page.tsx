@@ -73,8 +73,14 @@ export default function EmployeesPage() {
         title="Employees"
         description="The central record for every hire — contracts, attendance and leave connect back here."
         actions={
-          <Link href="/dashboard/employees/new" className={buttonVariants()}>
-            <Plus /> New employee
+          <Link
+            href="/dashboard/employees/new"
+            className={buttonVariants({
+              className: "gap-2",
+            })}
+          >
+            <Plus className="size-4" />
+            New employee
           </Link>
         }
       />

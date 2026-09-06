@@ -158,6 +158,7 @@ export default function TimeOffPage() {
               <Button
                 variant="outline"
                 size="sm"
+                nativeButton={false}
                 render={<Link href="/dashboard/time-off/allocations" />}
               >
                 Manage <ArrowRight />
@@ -170,6 +171,7 @@ export default function TimeOffPage() {
               <Button
                 variant="outline"
                 size="sm"
+                nativeButton={false}
                 render={<Link href="/dashboard/time-off/requests" />}
               >
                 Manage <ArrowRight />

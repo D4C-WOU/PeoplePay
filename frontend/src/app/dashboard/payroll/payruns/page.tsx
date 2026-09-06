@@ -124,7 +124,7 @@ function NewPayrunWizard({ onCreated }: { onCreated: () => void }) {
       <DialogTrigger render={<Button />}>
         <Plus /> New pay run
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="w-[min(92vw,760px)] max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {step === 1
@@ -285,7 +285,7 @@ export default function PayrunsPage() {
   }
 
   return (
-    <div className="pp-page flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col">
       <Header
         title="Pay Runs"
         description="Select employees explicitly — the payrun contains only who you choose."
@@ -298,24 +298,27 @@ export default function PayrunsPage() {
           />
         }
       />
-      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
-        <FilterBar
-          hasActiveFilters={status !== "all"}
-          onClear={() => updateStatus("all")}
-        >
-          <Select value={status} onValueChange={updateStatus}>
-            <SelectTrigger className="w-44 bg-white">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="PROCESSING">Processing</SelectItem>
-              <SelectItem value="COMPLETED">Completed</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        </FilterBar>
+      <div className="flex-1 space-y-4 p-4 sm:p-6">
+        <div className="flex justify-center">
+          <FilterBar
+            className="w-full max-w-2xl justify-center"
+            hasActiveFilters={status !== "all"}
+            onClear={() => updateStatus("all")}
+          >
+            <Select value={status} onValueChange={updateStatus}>
+              <SelectTrigger className="w-44 bg-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="DRAFT">Draft</SelectItem>
+                <SelectItem value="PROCESSING">Processing</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterBar>
+        </div>
         <DataTable
           rows={payruns}
           rowKey={(run) => run.id}

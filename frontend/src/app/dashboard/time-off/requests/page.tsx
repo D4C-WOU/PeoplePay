@@ -88,7 +88,7 @@ function NewRequestDialog({ onCreated }: { onCreated: () => void }) {
       <DialogTrigger render={<Button />}>
         <Plus /> New request
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-2xl">
         <DialogHeader>
           <DialogTitle>New time-off request</DialogTitle>
         </DialogHeader>
@@ -220,18 +220,20 @@ export default function TimeOffRequestsPage() {
         actions={<NewRequestDialog onCreated={reload} />}
       />
       <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-44">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="APPROVED">Approved</SelectItem>
-            <SelectItem value="REJECTED">Rejected</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex justify-center">
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-44 bg-white">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="APPROVED">Approved</SelectItem>
+              <SelectItem value="REJECTED">Rejected</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         {error && <ErrorBanner message={error} />}
         {rowError && <ErrorBanner message={rowError} />}

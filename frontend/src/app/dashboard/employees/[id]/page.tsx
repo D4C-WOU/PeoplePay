@@ -15,7 +15,7 @@ export default function EditEmployeePage() {
     <div className="pp-page flex flex-1 flex-col">
       <Header title="Edit employee" description={employee?.employee_number} />
       <div className="pp-page-content flex-1 p-4 sm:p-6">
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-2xl">
           {loading && <LoadingBanner />}
           {error && <ErrorBanner message={error} />}
           {employee && <EmployeeForm employee={employee} />}

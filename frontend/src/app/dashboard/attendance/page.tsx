@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Plus } from "lucide-react";
+import { CalendarClock, Loader2, Plus } from "lucide-react";
 
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -80,12 +80,12 @@ function NewAttendanceDialog({ onCreated }: { onCreated: () => void }) {
       <DialogTrigger render={<Button />}>
         <Plus /> New record
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>New attendance record</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-1.5">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2">
             <Label>Employee</Label>
             <Select value={employeeId} onValueChange={setEmployeeId}>
               <SelectTrigger className="w-full">
@@ -100,7 +100,7 @@ function NewAttendanceDialog({ onCreated }: { onCreated: () => void }) {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="date">Date</Label>
             <Input
               id="date"
@@ -110,8 +110,8 @@ function NewAttendanceDialog({ onCreated }: { onCreated: () => void }) {
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="checkin">Check in</Label>
               <Input
                 id="checkin"
@@ -120,7 +120,7 @@ function NewAttendanceDialog({ onCreated }: { onCreated: () => void }) {
                 onChange={(e) => setCheckIn(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="checkout">Check out</Label>
               <Input
                 id="checkout"
@@ -130,8 +130,8 @@ function NewAttendanceDialog({ onCreated }: { onCreated: () => void }) {
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="expected">Expected hours</Label>
               <Input
                 id="expected"
@@ -142,7 +142,7 @@ function NewAttendanceDialog({ onCreated }: { onCreated: () => void }) {
                 onChange={(e) => setExpectedHours(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label>Status</Label>
               <Select
                 value={status}
@@ -163,7 +163,7 @@ function NewAttendanceDialog({ onCreated }: { onCreated: () => void }) {
             </div>
           </div>
           {error && (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
               {error}
             </p>
           )}
@@ -175,7 +175,17 @@ function NewAttendanceDialog({ onCreated }: { onCreated: () => void }) {
               type="submit"
               disabled={saving || !employeeId || !attendanceDate}
             >
-              {saving ? "Saving…" : "Create"}
+              {saving ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Plus className="size-4" />
+                  Create record
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>
@@ -218,25 +228,28 @@ export default function AttendancePage() {
         actions={<NewAttendanceDialog onCreated={reload} />}
       />
       <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
-        <FilterBar
-          hasActiveFilters={status !== "all"}
-          onClear={() => updateStatus("all")}
-        >
-          <Select value={status} onValueChange={updateStatus}>
-            <SelectTrigger className="w-44 bg-white">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="PRESENT">Present</SelectItem>
-              <SelectItem value="ABSENT">Absent</SelectItem>
-              <SelectItem value="HALF_DAY">Half day</SelectItem>
-              <SelectItem value="LATE">Late</SelectItem>
-              <SelectItem value="ON_LEAVE">On leave</SelectItem>
-              <SelectItem value="HOLIDAY">Holiday</SelectItem>
-            </SelectContent>
-          </Select>
-        </FilterBar>
+        <div className="flex justify-center">
+          <FilterBar
+            hasActiveFilters={status !== "all"}
+            onClear={() => updateStatus("all")}
+            className="w-full max-w-2xl justify-center"
+          >
+            <Select value={status} onValueChange={updateStatus}>
+              <SelectTrigger className="w-44 bg-white">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="PRESENT">Present</SelectItem>
+                <SelectItem value="ABSENT">Absent</SelectItem>
+                <SelectItem value="HALF_DAY">Half day</SelectItem>
+                <SelectItem value="LATE">Late</SelectItem>
+                <SelectItem value="ON_LEAVE">On leave</SelectItem>
+                <SelectItem value="HOLIDAY">Holiday</SelectItem>
+              </SelectContent>
+            </Select>
+          </FilterBar>
+        </div>
         <DataTable
           rows={records}
           rowKey={(record) => record.id}

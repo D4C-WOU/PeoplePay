@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
+import { EmptyState } from "@/components/shared/empty-state";
 import { usePayruns } from "@/hooks/usePayroll";
 
 function money(value: number, currency = "INR") {
@@ -23,109 +24,117 @@ export default function PayrollOverviewPage() {
   const recent = (payruns ?? []).slice(0, 5);
 
   return (
-    <div className="pp-page flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col">
       <Header
         title="Payroll"
         description="Run payroll, review payslips, and manage the payroll lifecycle."
       />
-      <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Card>
-            <CardContent className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex size-10 items-center justify-center rounded-lg"
-                  style={{ background: "var(--pp-brand-light)" }}
+      <div className="flex-1 space-y-4 p-4 sm:p-6">
+        <div className="mx-auto w-full max-w-[1480px] space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Card>
+              <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-1">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div
+                    className="flex size-10 items-center justify-center rounded-lg"
+                    style={{ background: "var(--pp-brand-light)" }}
+                  >
+                    <PlayCircle
+                      className="size-5"
+                      style={{ color: "var(--pp-brand)" }}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium">Pay Runs</p>
+                    <p className="text-xs text-muted-foreground">
+                      Create, compute and finalize payroll periods
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  nativeButton={false}
+                  render={<Link href="/dashboard/payroll/payruns" />}
                 >
-                  <PlayCircle
-                    className="size-5"
-                    style={{ color: "var(--pp-brand)" }}
-                  />
+                  Open <ArrowRight />
+                </Button>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-1">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div
+                    className="flex size-10 items-center justify-center rounded-lg"
+                    style={{ background: "var(--pp-brand-light)" }}
+                  >
+                    <Receipt
+                      className="size-5"
+                      style={{ color: "var(--pp-brand)" }}
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium">Payslips</p>
+                    <p className="text-xs text-muted-foreground">
+                      Browse, download PDF, review breakdowns
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">Pay Runs</p>
-                  <p className="text-xs text-muted-foreground">
-                    Create, compute and finalize payroll periods
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                render={<Link href="/dashboard/payroll/payruns" />}
-              >
-                Open <ArrowRight />
-              </Button>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center justify-between pt-1">
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex size-10 items-center justify-center rounded-lg"
-                  style={{ background: "var(--pp-brand-light)" }}
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  nativeButton={false}
+                  render={<Link href="/dashboard/payroll/payslips" />}
                 >
-                  <Receipt
-                    className="size-5"
-                    style={{ color: "var(--pp-brand)" }}
-                  />
+                  Open <ArrowRight />
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">Recent pay runs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {error && <ErrorBanner message={error} />}
+              {loading ? (
+                <LoadingBanner label="Loading pay runs…" />
+              ) : recent.length === 0 ? (
+                <EmptyState
+                  icon={PlayCircle}
+                  title="No pay runs yet"
+                  description="Start one from the Pay Runs page to begin processing payroll."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {recent.map((run) => (
+                    <Link
+                      key={run.id}
+                      href={`/dashboard/payroll/payruns/${run.id}`}
+                      className="flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
+                    >
+                      <div>
+                        <p className="font-medium">
+                          {run.period_start} → {run.period_end}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {run.employee_count} employees
+                        </p>
+                      </div>
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <span className="text-sm">
+                          {money(Number(run.total_net))}
+                        </span>
+                        <StatusBadge status={run.status} />
+                      </div>
+                    </Link>
+                  ))}
                 </div>
-                <div>
-                  <p className="font-medium">Payslips</p>
-                  <p className="text-xs text-muted-foreground">
-                    Browse, download PDF, review breakdowns
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                render={<Link href="/dashboard/payroll/payslips" />}
-              >
-                Open <ArrowRight />
-              </Button>
+              )}
             </CardContent>
           </Card>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Recent pay runs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {error && <ErrorBanner message={error} />}
-            {loading ? (
-              <LoadingBanner label="Loading pay runs…" />
-            ) : recent.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No pay runs yet. Start one from the Pay Runs page.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {recent.map((run) => (
-                  <Link
-                    key={run.id}
-                    href={`/dashboard/payroll/payruns/${run.id}`}
-                    className="flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {run.period_start} → {run.period_end}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {run.employee_count} employees
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm">
-                        {money(Number(run.total_net))}
-                      </span>
-                      <StatusBadge status={run.status} />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

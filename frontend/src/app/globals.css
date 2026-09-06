@@ -48,8 +48,6 @@
 
 * {
   box-sizing: border-box;
-  margin: 0;
-  padding: 0;
 }
 
 html {
@@ -112,7 +110,8 @@ button:disabled {
   background: #b8c5bf;
 }
 
-:focus-visible {
+button:focus-visible,
+a:focus-visible {
   outline: 2px solid var(--pp-brand);
   outline-offset: 3px;
   border-radius: 5px;

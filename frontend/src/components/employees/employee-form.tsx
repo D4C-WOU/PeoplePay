@@ -87,11 +87,11 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
   }
 
   return (
-    <Card>
-      <CardContent className="pt-1">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
+    <Card className="rounded-2xl border border-(--pp-border) bg-(--pp-card-bg) shadow-(--pp-shadow)">
+      <CardContent className="p-5 sm:p-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="employee-number">Employee number</Label>
               <Input
                 id="employee-number"
@@ -100,7 +100,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 required
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="hire-date">Hire date</Label>
               <Input
                 id="hire-date"
@@ -110,7 +110,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 required
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="first-name">First name</Label>
               <Input
                 id="first-name"
@@ -119,7 +119,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 required
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="last-name">Last name</Label>
               <Input
                 id="last-name"
@@ -128,7 +128,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 required
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -138,7 +138,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 required
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="phone">Phone</Label>
               <Input
                 id="phone"
@@ -146,7 +146,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 onChange={(e) => setPhone(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="job-title">Job title</Label>
               <Input
                 id="job-title"
@@ -154,7 +154,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 onChange={(e) => setJobTitle(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label>Employee type</Label>
               <Select
                 value={employeeType}
@@ -171,7 +171,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label>Department</Label>
               <Select
                 value={departmentId ?? ""}
@@ -191,8 +191,8 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="bank-name">Bank name</Label>
               <Input
                 id="bank-name"
@@ -200,7 +200,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 onChange={(e) => setBankName(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="bank-account">Account number</Label>
               <Input
                 id="bank-account"
@@ -208,7 +208,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
                 onChange={(e) => setBankAccountNumber(e.target.value)}
               />
             </div>
-            <div className="space-y-1.5">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="bank-ifsc">IFSC</Label>
               <Input
                 id="bank-ifsc"
@@ -218,7 +218,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="address">Address</Label>
             <Textarea
               id="address"
@@ -228,12 +228,12 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
           </div>
 
           {error && (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <p className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
               {error}
             </p>
           )}
 
-          <div className="flex justify-end gap-2">
+          <div className="-mx-5 -mb-5 mt-1 flex flex-col-reverse gap-2 rounded-b-2xl border-t border-(--pp-border) bg-muted/50 p-4 sm:-mx-6 sm:-mb-6 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"

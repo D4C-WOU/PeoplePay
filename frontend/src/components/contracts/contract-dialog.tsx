@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+
 import { useEmployees, useSchedules, contractApi } from "@/hooks/useEmployees";
 import { useSalaryStructures } from "@/hooks/usePayroll";
 import { ApiError } from "@/lib/api";
@@ -30,9 +30,15 @@ import type { ContractType } from "@/types/employee";
 
 export function ContractDialog({ onCreated }: { onCreated: () => void }) {
   const [open, setOpen] = useState(false);
-  const { data: employees } = useEmployees({ status: "ACTIVE" });
-  const { data: structures } = useSalaryStructures(true);
-  const { data: schedules } = useSchedules();
+
+  const { data: employees, loading: employeesLoading } = useEmployees({
+    status: "ACTIVE",
+  });
+
+  const { data: structures, loading: structuresLoading } =
+    useSalaryStructures(true);
+
+  const { data: schedules, loading: schedulesLoading } = useSchedules();
 
   const [employeeId, setEmployeeId] = useState("");
   const [salaryStructureId, setSalaryStructureId] = useState("");
@@ -44,10 +50,11 @@ export function ContractDialog({ onCreated }: { onCreated: () => void }) {
   const [baseSalary, setBaseSalary] = useState("");
   const [currency, setCurrency] = useState("INR");
   const [notes, setNotes] = useState("");
+
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  function reset() {
+  function resetForm() {
     setEmployeeId("");
     setSalaryStructureId("");
     setWorkScheduleId("");
@@ -61,25 +68,87 @@ export function ContractDialog({ onCreated }: { onCreated: () => void }) {
     setError(null);
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSaving(true);
+  function handleOpenChange(value: boolean) {
+    if (saving) return;
+
+    setOpen(value);
+
+    if (!value) {
+      resetForm();
+    }
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (saving) return;
+
     setError(null);
+
+    const cleanContractNumber = contractNumber.trim();
+    const cleanCurrency = currency.trim().toUpperCase();
+    const cleanNotes = notes.trim();
+
+    if (!employeeId) {
+      setError("Please select an employee.");
+      return;
+    }
+
+    if (!salaryStructureId) {
+      setError("Please select a salary structure.");
+      return;
+    }
+
+    if (!cleanContractNumber) {
+      setError("Contract number is required.");
+      return;
+    }
+
+    if (!startDate) {
+      setError("Start date is required.");
+      return;
+    }
+
+    if (endDate && endDate < startDate) {
+      setError("End date cannot be before the start date.");
+      return;
+    }
+
+    if (!baseSalary.trim()) {
+      setError("Base salary is required.");
+      return;
+    }
+
+    const salary = Number(baseSalary);
+
+    if (!Number.isFinite(salary) || salary < 0) {
+      setError("Base salary must be a valid positive number.");
+      return;
+    }
+
+    if (!cleanCurrency) {
+      setError("Currency is required.");
+      return;
+    }
+
+    setSaving(true);
+
     try {
       await contractApi.create({
         employee_id: employeeId,
         salary_structure_id: salaryStructureId,
         work_schedule_id: workScheduleId || undefined,
-        contract_number: contractNumber,
+        contract_number: cleanContractNumber,
         start_date: startDate,
         end_date: endDate || undefined,
         contract_type: contractType,
-        base_salary: Number(baseSalary),
-        currency,
-        notes: notes || undefined,
+        base_salary: salary,
+        currency: cleanCurrency,
+        notes: cleanNotes || undefined,
       });
+
       setOpen(false);
-      reset();
+      resetForm();
       onCreated();
     } catch (err) {
       setError(
@@ -90,176 +159,303 @@ export function ContractDialog({ onCreated }: { onCreated: () => void }) {
     }
   }
 
+  const loadingDependencies =
+    employeesLoading || structuresLoading || schedulesLoading;
+
+  const cannotCreate =
+    saving ||
+    !employeeId ||
+    !salaryStructureId ||
+    !contractNumber.trim() ||
+    !startDate ||
+    !baseSalary.trim() ||
+    !currency.trim();
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        setOpen(v);
-        if (!v) reset();
-      }}
-    >
-      <DialogTrigger render={<Button />}>
-        <Plus /> New contract
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <Button
+        type="button"
+        onClick={() => {
+          setError(null);
+          setOpen(true);
+        }}
+        disabled={saving}
+      >
+        <Plus className="size-4" />
+        New contract
+      </Button>
+
+      <DialogContent className="w-[calc(100%-2rem)] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>New contract</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>Employee</Label>
-            <Select value={employeeId} onValueChange={setEmployeeId}>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label>Employee</Label>
+
+              <Select
+                value={employeeId}
+                onValueChange={setEmployeeId}
+                disabled={saving || employeesLoading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={
+                      employeesLoading
+                        ? "Loading employees..."
+                        : "Select employee"
+                    }
+                  />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {employees?.length ? (
+                    employees.map((employee) => (
+                      <SelectItem key={employee.id} value={employee.id}>
+                        {employee.first_name} {employee.last_name} (
+                        {employee.employee_number})
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="__empty" disabled>
+                      No active employees
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Salary structure</Label>
+
+              <Select
+                value={salaryStructureId}
+                onValueChange={setSalaryStructureId}
+                disabled={saving || structuresLoading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={
+                      structuresLoading
+                        ? "Loading structures..."
+                        : "Select structure"
+                    }
+                  />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {structures?.length ? (
+                    structures.map((structure) => (
+                      <SelectItem key={structure.id} value={structure.id}>
+                        {structure.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="__empty" disabled>
+                      No active salary structures
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Work schedule</Label>
+
+            <Select
+              value={workScheduleId}
+              onValueChange={setWorkScheduleId}
+              disabled={saving || schedulesLoading}
+            >
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select employee" />
+                <SelectValue
+                  placeholder={
+                    schedulesLoading
+                      ? "Loading schedules..."
+                      : "Select schedule (optional)"
+                  }
+                />
               </SelectTrigger>
+
               <SelectContent>
-                {employees?.map((emp) => (
-                  <SelectItem key={emp.id} value={emp.id}>
-                    {emp.first_name} {emp.last_name} ({emp.employee_number})
+                {schedules?.length ? (
+                  schedules.map((schedule) => (
+                    <SelectItem key={schedule.id} value={schedule.id}>
+                      {schedule.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="__empty" disabled>
+                    No schedules available
                   </SelectItem>
-                ))}
+                )}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>Salary structure</Label>
-              <Select
-                value={salaryStructureId}
-                onValueChange={setSalaryStructureId}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select structure" />
-                </SelectTrigger>
-                <SelectContent>
-                  {structures?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Work schedule (optional)</Label>
-              <Select value={workScheduleId} onValueChange={setWorkScheduleId}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select schedule" />
-                </SelectTrigger>
-                <SelectContent>
-                  {schedules?.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="contract-number">Contract number</Label>
+
             <Input
               id="contract-number"
               value={contractNumber}
-              onChange={(e) => setContractNumber(e.target.value)}
+              onChange={(event) => setContractNumber(event.target.value)}
               placeholder="CTR-EMP006"
+              disabled={saving}
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="start-date">Start date</Label>
+
               <Input
                 id="start-date"
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(event) => setStartDate(event.target.value)}
+                disabled={saving}
                 required
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="end-date">End date (optional)</Label>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="end-date">
+                End date
+                <span className="ml-1 text-muted-foreground">(optional)</span>
+              </Label>
+
               <Input
                 id="end-date"
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || undefined}
+                onChange={(event) => setEndDate(event.target.value)}
+                disabled={saving}
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
               <Label>Contract type</Label>
+
               <Select
                 value={contractType}
-                onValueChange={(v) => setContractType(v as ContractType)}
+                onValueChange={(value) =>
+                  setContractType(value as ContractType)
+                }
+                disabled={saving}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
+
                 <SelectContent>
                   <SelectItem value="FULL_TIME">Full time</SelectItem>
+
                   <SelectItem value="PART_TIME">Part time</SelectItem>
+
                   <SelectItem value="CONTRACT">Contract</SelectItem>
+
                   <SelectItem value="INTERN">Intern</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
+
+            <div className="flex flex-col gap-2">
               <Label htmlFor="base-salary">Base salary</Label>
+
               <Input
                 id="base-salary"
                 type="number"
                 min={0}
                 step="0.01"
                 value={baseSalary}
-                onChange={(e) => setBaseSalary(e.target.value)}
+                onChange={(event) => setBaseSalary(event.target.value)}
+                placeholder="50000"
+                disabled={saving}
                 required
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="currency">Currency</Label>
+
             <Input
               id="currency"
               value={currency}
-              onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+              onChange={(event) =>
+                setCurrency(event.target.value.toUpperCase())
+              }
               maxLength={10}
+              placeholder="INR"
+              disabled={saving}
               required
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="notes">Notes (optional)</Label>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="notes">
+              Notes
+              <span className="ml-1 text-muted-foreground">(optional)</span>
+            </Label>
+
             <Textarea
               id="notes"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(event) => setNotes(event.target.value)}
+              placeholder="Additional contract notes..."
+              disabled={saving}
+              className="min-h-24 resize-none"
             />
           </div>
 
+          {!loadingDependencies &&
+            (!employees?.length || !structures?.length) && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {!employees?.length &&
+                  "There are no active employees available. "}
+                {!structures?.length &&
+                  "There are no active salary structures available."}
+              </div>
+            )}
+
           {error && (
-            <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div
+              role="alert"
+              className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-sm text-destructive"
+            >
               {error}
-            </p>
+            </div>
           )}
 
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" type="button" />}>
-              Cancel
-            </DialogClose>
-            <Button
-              type="submit"
-              disabled={
-                saving || !employeeId || !salaryStructureId || !contractNumber
+            <DialogClose
+              render={
+                <Button type="button" variant="outline" disabled={saving} />
               }
             >
-              {saving ? "Saving…" : "Create"}
+              Cancel
+            </DialogClose>
+
+            <Button type="submit" disabled={cannotCreate}>
+              {saving ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="size-4" />
+                  Create contract
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>

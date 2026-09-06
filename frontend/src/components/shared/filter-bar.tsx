@@ -11,6 +11,7 @@ type FilterBarProps = {
   children?: ReactNode;
   onClear?: () => void;
   hasActiveFilters?: boolean;
+  className?: string;
 };
 
 export function FilterBar({
