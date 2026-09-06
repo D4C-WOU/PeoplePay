@@ -13,11 +13,20 @@ from app.schemas.contract import (
 from app.schemas.pagination import Page
 from app.services import contract_service
 
-
 router = APIRouter(
     prefix="/contracts",
     tags=["Contracts"],
 )
+
+
+def _is_employee(user) -> bool:
+    return user.role.value == "EMPLOYEE"
+
+
+def _employee_id(user) -> str:
+    if user.employee is None:
+        raise HTTPException(status_code=403, detail="Employee profile not found")
+    return user.employee.id
 
 
 @router.get(
@@ -32,7 +41,10 @@ def list_contracts(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(user, "contracts:read")
+    if _is_employee(user):
+        employee_id = _employee_id(user)
+    else:
+        require_permission(user, "contracts:read")
 
     return contract_service.list_contracts(
         db=db,
@@ -77,6 +89,15 @@ def get_contract(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
+    if _is_employee(user):
+        try:
+            contract = contract_service.get_contract(db=db, contract_id=contract_id)
+        except ValueError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+        if contract.employee_id != _employee_id(user):
+            raise HTTPException(status_code=403, detail="Access denied")
+        return contract
+
     require_permission(user, "contracts:read")
 
     try:
@@ -113,9 +134,7 @@ def update_contract(
         return contract_service.update_contract(
             db=db,
             contract=contract,
-            updates=data.model_dump(
-                exclude_unset=True
-            ),
+            updates=data.model_dump(exclude_unset=True),
         )
 
     except ValueError as exc:

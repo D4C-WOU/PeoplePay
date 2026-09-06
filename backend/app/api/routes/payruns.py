@@ -236,6 +236,26 @@ def cancel_payrun(
 
 
 @router.post(
+    "/{payrun_id}/paid",
+    response_model=PayrunResponse,
+)
+def mark_paid(
+    payrun_id: str,
+    user=Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    require_permission(user, "payroll:write")
+
+    try:
+        payrun = payroll_service.get_payrun(db, payrun_id)
+        return payroll_service.mark_payrun_paid(db, payrun)
+    except ValueError as exc:
+        message = str(exc)
+        status = 404 if message == "Payrun not found" else 409
+        raise HTTPException(status_code=status, detail=message) from exc
+
+
+@router.post(
     "/{payrun_id}/send-payslips",
 )
 def send_payslips(

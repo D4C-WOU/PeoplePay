@@ -233,7 +233,7 @@ export function EmployeeForm({ employee }: { employee?: Employee }) {
             </p>
           )}
 
-          <div className="-mx-5 -mb-5 mt-1 flex flex-col-reverse gap-2 rounded-b-2xl border-t border-(--pp-border) bg-muted/50 p-4 sm:-mx-6 sm:-mb-6 sm:flex-row sm:justify-end">
+          <div className="-mx-5 -mb-5 mt-1 flex flex-col-reverse gap-2 rounded-b-2xl border-t border-(--pp-border) bg-(--pp-page-bg) p-4 sm:-mx-6 sm:-mb-6 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"

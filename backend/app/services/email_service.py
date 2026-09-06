@@ -50,8 +50,8 @@ def send_email(
 
 
 def send_payrun_payslips(db: Session, payrun: Payrun) -> dict:
-    if payrun.status != PayrunStatus.COMPLETED:
-        raise ValueError("Only completed payruns can send payslips")
+    if payrun.status not in {PayrunStatus.COMPLETED, PayrunStatus.PAID}:
+        raise ValueError("Only finalized or paid payruns can send payslips")
 
     slips = list(
         db.scalars(

@@ -40,6 +40,31 @@ export function canAccessHR(role?: UserRole) {
   return role === "ADMIN" || role === "HR_MANAGER";
 }
 
+export function canWritePayroll(role?: UserRole) {
+  return (
+    role === "ADMIN" ||
+    role === "PAYROLL_MANAGER" ||
+    role === "PAYROLL_USER"
+  );
+}
+
+export function canAccessSalary(role?: UserRole) {
+  return (
+    role === "ADMIN" ||
+    role === "PAYROLL_MANAGER" ||
+    role === "PAYROLL_USER"
+  );
+}
+
+export function canAccessTimeAttendance(role?: UserRole) {
+  return (
+    role === "ADMIN" ||
+    role === "HR_MANAGER" ||
+    role === "MANAGER" ||
+    role === "EMPLOYEE"
+  );
+}
+
 export function isSelfServiceOnly(role?: UserRole) {
   return role === "EMPLOYEE";
 }

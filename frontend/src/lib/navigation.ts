@@ -32,6 +32,7 @@ export const NAV_ITEMS: readonly NavigationItem[] = [
   { group: "Time & attendance", label: "Attendance", href: "/dashboard/attendance", icon: Clock4 },
   { group: "Time & attendance", label: "Time Off", href: "/dashboard/time-off", icon: CalendarDays },
   { group: "Time & attendance", label: "Work Schedules", href: "/dashboard/work-schedules", icon: CalendarClock },
+  { group: "My workspace", label: "My Payslips", href: "/dashboard/payroll/payslips", icon: Wallet },
   {
     group: "Payroll",
     label: "Payroll",

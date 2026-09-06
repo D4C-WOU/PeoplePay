@@ -278,6 +278,32 @@ def finalize_payrun(db: Session, payrun: Payrun) -> Payrun:
         raise
 
 
+def mark_payrun_paid(db: Session, payrun: Payrun) -> Payrun:
+    if payrun.status != PayrunStatus.COMPLETED:
+        raise ValueError("Only finalized payruns can be marked paid")
+
+    try:
+        slips = list(
+            db.scalars(select(Payslip).where(Payslip.payrun_id == payrun.id)).all()
+        )
+        if not slips:
+            raise ValueError("Cannot mark an empty payrun as paid")
+
+        for slip in slips:
+            if slip.status == PayslipStatus.FINALIZED:
+                slip.status = PayslipStatus.PAID
+            elif slip.status != PayslipStatus.PAID:
+                raise ValueError("Payrun contains a payslip that is not finalized")
+
+        payrun.status = PayrunStatus.PAID
+        db.commit()
+        db.refresh(payrun)
+        return payrun
+    except Exception:
+        db.rollback()
+        raise
+
+
 def cancel_payrun(db: Session, payrun: Payrun) -> Payrun:
     if payrun.status not in {PayrunStatus.DRAFT, PayrunStatus.PROCESSING}:
         raise ValueError("Only DRAFT or PROCESSING payruns can be cancelled")

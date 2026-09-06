@@ -155,20 +155,6 @@ def validate_payrun(db: Session, payrun) -> dict:
                     "message": "Bank details are incomplete.",
                 }
             )
-        duplicate = db.scalar(
-            select(Payslip).where(
-                Payslip.payrun_id == payrun.id, Payslip.employee_id == employee.id
-            )
-        )
-        if duplicate is not None:
-            warnings.append(
-                {
-                    "employee_id": employee.id,
-                    "employee_number": employee.employee_number,
-                    "type": "DUPLICATE_PAYSLIP",
-                    "message": "A payslip already exists for this employee in this payrun.",
-                }
-            )
         contract = db.scalar(
             select(Contract)
             .where(

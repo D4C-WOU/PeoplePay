@@ -99,11 +99,12 @@ def create(
     db: Session = Depends(get_db),
 ):
     if _is_employee(user):
-        if user.employee is None or data.employee_id != user.employee.id:
+        if user.employee is None:
             raise HTTPException(
                 status_code=403,
                 detail="Access denied",
             )
+        data.employee_id = user.employee.id
     else:
         require_permission(
             user,

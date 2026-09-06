@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -18,7 +19,19 @@ import {
 
 import { useDashboard } from "@/hooks/usePayroll";
 import { useAuth } from "@/hooks/useAuth";
+import { useAttendance, attendanceApi } from "@/hooks/useAttendance";
+import {
+  useTimeOffRequests,
+  useTimeOffTypes,
+  timeOffApi,
+} from "@/hooks/useTimeOff";
 import { LoadingBanner } from "@/components/shared/state-banner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { ApiError } from "@/lib/api";
+import { StatusBadge } from "@/components/shared/status-badge";
 
 function money(value: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -88,7 +101,250 @@ function SectionTitle({
   );
 }
 
-export default function DashboardPage() {
+function localDate() {
+  const date = new Date();
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+function EmployeeDashboard() {
+  const today = localDate();
+  const {
+    data: attendance,
+    loading: attendanceLoading,
+    reload: reloadAttendance,
+  } = useAttendance();
+  const {
+    data: requests,
+    loading: requestsLoading,
+    reload: reloadRequests,
+  } = useTimeOffRequests();
+  const { data: timeOffTypes } = useTimeOffTypes(true);
+  const [savingAttendance, setSavingAttendance] = useState(false);
+  const [savingLeave, setSavingLeave] = useState(false);
+  const [attendanceError, setAttendanceError] = useState<string | null>(null);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
+  const [typeId, setTypeId] = useState("");
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(today);
+  const [reason, setReason] = useState("");
+
+  const todayRecord = attendance?.find(
+    (record) => record.attendance_date === today,
+  );
+  const recentRequests = (requests ?? []).slice(0, 4);
+
+  async function markAttendance() {
+    setSavingAttendance(true);
+    setAttendanceError(null);
+    try {
+      if (todayRecord?.check_in && !todayRecord.check_out) {
+        await attendanceApi.update(todayRecord.id, {
+          check_out: new Date().toISOString(),
+        });
+      } else if (!todayRecord) {
+        await attendanceApi.create({
+          employee_id: "",
+          attendance_date: today,
+          check_in: new Date().toISOString(),
+          expected_hours: 8,
+          status: "PRESENT",
+        });
+      }
+      reloadAttendance();
+    } catch (error) {
+      setAttendanceError(
+        error instanceof ApiError
+          ? error.message
+          : "Could not update attendance.",
+      );
+    } finally {
+      setSavingAttendance(false);
+    }
+  }
+
+  async function requestLeave(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSavingLeave(true);
+    setLeaveError(null);
+    try {
+      await timeOffApi.createRequest({
+        employee_id: "",
+        time_off_type_id: typeId,
+        start_date: startDate,
+        end_date: endDate,
+        reason: reason || undefined,
+      });
+      setReason("");
+      reloadRequests();
+    } catch (error) {
+      setLeaveError(
+        error instanceof ApiError
+          ? error.message
+          : "Could not submit leave request.",
+      );
+    } finally {
+      setSavingLeave(false);
+    }
+  }
+
+  return (
+    <div className="dashboard-page dashboard-self-service-page">
+      <section className="dashboard-hero">
+        <div className="dashboard-hero-inner">
+          <div>
+            <span className="dashboard-date">Self-service</span>
+            <h1>Keep your day up to date.</h1>
+            <p>Mark attendance and submit leave requests from one place.</p>
+          </div>
+        </div>
+      </section>
+      <div className="dashboard-page-inner space-y-6">
+        <section className="grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="dashboard-panel flex flex-col justify-between gap-6">
+            <div>
+              <span className="dashboard-section-title">
+                <span>Today</span>
+              </span>
+              <h2 className="mt-1 text-xl font-semibold">Attendance</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {todayRecord?.check_out
+                  ? "Your attendance is complete for today."
+                  : todayRecord?.check_in
+                    ? "You are checked in. Mark check-out when you finish."
+                    : "You have not marked attendance yet."}
+              </p>
+            </div>
+            <Button
+              onClick={markAttendance}
+              disabled={
+                attendanceLoading ||
+                savingAttendance ||
+                !!todayRecord?.check_out
+              }
+            >
+              {attendanceLoading || savingAttendance
+                ? "Loading..."
+                : todayRecord?.check_in
+                  ? "Mark check-out"
+                  : "Mark attendance"}
+            </Button>
+            {attendanceError && (
+              <p className="text-sm text-destructive">{attendanceError}</p>
+            )}
+          </div>
+
+          <form
+            onSubmit={requestLeave}
+            className="dashboard-panel flex flex-col gap-4"
+          >
+            <div>
+              <span className="dashboard-section-title">
+                <span>Time off</span>
+              </span>
+              <h2 className="mt-1 text-xl font-semibold">Request leave</h2>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="flex flex-col gap-2">
+                <Label>Leave type</Label>
+                <select
+                  className="h-9 rounded-xl border border-(--pp-border-strong) bg-white px-3 text-sm"
+                  value={typeId}
+                  onChange={(event) => setTypeId(event.target.value)}
+                  required
+                >
+                  <option value="">Select type</option>
+                  {timeOffTypes?.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="employee-leave-start">From</Label>
+                <Input
+                  id="employee-leave-start"
+                  type="date"
+                  value={startDate}
+                  onChange={(event) => setStartDate(event.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="employee-leave-end">To</Label>
+                <Input
+                  id="employee-leave-end"
+                  type="date"
+                  value={endDate}
+                  onChange={(event) => setEndDate(event.target.value)}
+                  min={startDate}
+                  required
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="employee-leave-reason">Reason</Label>
+              <Textarea
+                id="employee-leave-reason"
+                value={reason}
+                onChange={(event) => setReason(event.target.value)}
+                placeholder="Add a short reason (optional)"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              {leaveError ? (
+                <p className="text-sm text-destructive">{leaveError}</p>
+              ) : (
+                <span />
+              )}
+              <Button type="submit" disabled={savingLeave || !typeId}>
+                {savingLeave ? "Submitting..." : "Submit request"}
+              </Button>
+            </div>
+          </form>
+        </section>
+
+        <section className="dashboard-panel">
+          <div className="dashboard-section-title">
+            <div>
+              <span>History</span>
+              <h2>Recent leave requests</h2>
+            </div>
+          </div>
+          {requestsLoading ? (
+            <LoadingBanner label="Loading leave requests..." />
+          ) : recentRequests.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No leave requests yet.
+            </p>
+          ) : (
+            <div className="mt-4 grid gap-2">
+              {recentRequests.map((request) => (
+                <div
+                  key={request.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-(--pp-border) p-3"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {request.start_date} to {request.end_date}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {request.requested_days} day(s)
+                    </p>
+                  </div>
+                  <StatusBadge status={request.status} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function DashboardContent() {
   const { user } = useAuth();
   const { data, loading } = useDashboard();
 
@@ -108,7 +364,7 @@ export default function DashboardPage() {
   const largestDepartment = departments[0]?.total_salary || 1;
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-page dashboard-admin-page">
       <section className="dashboard-hero">
         <div className="dashboard-hero-inner">
           <div>
@@ -328,5 +584,14 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  const { user } = useAuth();
+  return user?.role === "EMPLOYEE" ? (
+    <EmployeeDashboard />
+  ) : (
+    <DashboardContent />
   );
 }

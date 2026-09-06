@@ -19,6 +19,16 @@ router = APIRouter(
 )
 
 
+def _is_employee(user) -> bool:
+    return user.role.value == "EMPLOYEE"
+
+
+def _employee_id(user) -> str:
+    if user.employee is None:
+        raise HTTPException(status_code=403, detail="Employee profile not found")
+    return user.employee.id
+
+
 @router.get("", response_model=list[EmployeeResponse] | Page[EmployeeResponse])
 def list_employees(
     department_id: str | None = None,
@@ -29,6 +39,10 @@ def list_employees(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
+    if _is_employee(user):
+        employee_id = _employee_id(user)
+        return [employee_service.get_employee(db=db, employee_id=employee_id)]
+
     require_permission(user, "employees:read")
 
     return employee_service.list_employees(
@@ -74,7 +88,10 @@ def get_employee(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(user, "employees:read")
+    if _is_employee(user) and employee_id != _employee_id(user):
+        raise HTTPException(status_code=403, detail="Access denied")
+    if not _is_employee(user):
+        require_permission(user, "employees:read")
 
     try:
         return employee_service.get_employee(

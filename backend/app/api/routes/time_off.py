@@ -21,6 +21,21 @@ router = APIRouter(
 )
 
 
+def _is_employee(user) -> bool:
+    return user.role.value == "EMPLOYEE"
+
+
+def _employee_id(user) -> str:
+    if user.employee is None:
+        raise HTTPException(status_code=403, detail="Employee profile not found")
+    return user.employee.id
+
+
+def _verify_employee_request_access(user, request) -> None:
+    if _is_employee(user) and request.employee_id != _employee_id(user):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+
 @router.get(
     "/types",
     response_model=list[TimeOffTypeResponse],
@@ -30,7 +45,8 @@ def list_types(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(user, "timeoff:read")
+    if not _is_employee(user):
+        require_permission(user, "timeoff:read")
 
     return time_off_service.list_time_off_types(
         db,
@@ -72,7 +88,10 @@ def list_allocations(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(user, "timeoff:read")
+    if _is_employee(user):
+        employee_id = _employee_id(user)
+    else:
+        require_permission(user, "timeoff:read")
 
     return time_off_service.list_allocations(
         db,
@@ -115,7 +134,10 @@ def list_requests(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(user, "timeoff:read")
+    if _is_employee(user):
+        employee_id = _employee_id(user)
+    else:
+        require_permission(user, "timeoff:read")
 
     return time_off_service.list_requests(
         db,
@@ -134,7 +156,10 @@ def create_request(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(user, "timeoff:write")
+    if _is_employee(user):
+        data.employee_id = _employee_id(user)
+    else:
+        require_permission(user, "timeoff:write")
 
     try:
         return time_off_service.create_request(
@@ -157,18 +182,19 @@ def get_request(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(user, "timeoff:read")
-
     try:
-        return time_off_service.get_request(
-            db,
-            request_id,
-        )
+        request = time_off_service.get_request(db, request_id)
     except ValueError as exc:
         raise HTTPException(
             status_code=404,
             detail=str(exc),
         )
+
+    _verify_employee_request_access(user, request)
+    if not _is_employee(user):
+        require_permission(user, "timeoff:read")
+
+    return request
 
 
 @router.post(
@@ -228,7 +254,13 @@ def cancel_request(
     user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    require_permission(user, "timeoff:write")
+    try:
+        request = time_off_service.get_request(db, request_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    _verify_employee_request_access(user, request)
+    if not _is_employee(user):
+        require_permission(user, "timeoff:write")
 
     try:
         return time_off_service.cancel_request(

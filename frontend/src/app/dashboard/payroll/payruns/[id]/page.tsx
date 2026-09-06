@@ -25,6 +25,9 @@ import {
 import { StatusBadge } from "@/components/shared/status-badge";
 import { LoadingBanner, ErrorBanner } from "@/components/shared/state-banner";
 import { usePayrun, usePayslips, payrunApi } from "@/hooks/usePayroll";
+import { useSalaryStructures } from "@/hooks/usePayroll";
+import { useEmployees } from "@/hooks/useEmployees";
+import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 import type { PayrunValidation } from "@/types/payroll";
 
@@ -36,7 +39,15 @@ function money(value: number, currency = "INR") {
   }).format(value ?? 0);
 }
 
+function periodTitle(value: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00`));
+}
+
 export default function PayrunDetailPage() {
+  const { user } = useAuth();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { data: payrun, loading, error, reload } = usePayrun(params.id);
@@ -45,6 +56,8 @@ export default function PayrunDetailPage() {
     loading: payslipsLoading,
     reload: reloadPayslips,
   } = usePayslips({ payrun_id: params.id });
+  const { data: employees } = useEmployees();
+  const { data: salaryStructures } = useSalaryStructures();
 
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -114,6 +127,14 @@ export default function PayrunDetailPage() {
     });
   }
 
+  async function handleMarkPaid() {
+    if (!payrun) return;
+    await withAction("mark paid", async () => {
+      await payrunApi.markPaid(payrun.id);
+      refreshAll();
+    });
+  }
+
   if (loading) return <LoadingBanner label="Loading pay run…" />;
   if (error) return <ErrorBanner message={error} />;
   if (!payrun) return null;
@@ -121,12 +142,57 @@ export default function PayrunDetailPage() {
   return (
     <div className="pp-page flex flex-1 flex-col">
       <Header
-        title={`${payrun.period_start} → ${payrun.period_end}`}
+        title={`${periodTitle(payrun.period_start)} Payroll`}
         description={`${payrun.employee_count} employees selected`}
         actions={<StatusBadge status={payrun.status} />}
       />
       <div className="pp-page-content flex-1 space-y-4 p-4 sm:p-6">
         {actionError && <ErrorBanner message={actionError} />}
+
+        <Card>
+          <CardContent className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                Period
+              </p>
+              <p className="mt-1 font-medium">
+                {payrun.period_start} → {payrun.period_end}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                Payment date
+              </p>
+              <p className="mt-1 font-medium">
+                {payrun.payment_date ?? "Not set"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                Salary structure
+              </p>
+              <p className="mt-1 font-medium">
+                {salaryStructures?.find(
+                  (item) => item.id === payrun.salary_structure_id,
+                )?.code ?? "Not set"}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                Employees
+              </p>
+              <p className="mt-1 font-medium">{payrun.employee_count}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                Status
+              </p>
+              <div className="mt-1">
+                <StatusBadge status={payrun.status} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Card>
@@ -165,69 +231,119 @@ export default function PayrunDetailPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle className="text-sm">Employees</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {(payrun.employee_ids ?? []).map((employeeId) => {
+              const employee = employees?.find(
+                (item) => item.id === employeeId,
+              );
+              return (
+                <div key={employeeId} className="rounded-lg border p-3 text-sm">
+                  <p className="font-medium">
+                    {employee
+                      ? `${employee.first_name} ${employee.last_name}`
+                      : employeeId}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {employee?.employee_number ?? "Employee"}
+                  </p>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle className="text-sm">Workflow actions</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              disabled={!!busy}
-              onClick={handleValidate}
-            >
-              {busy === "validate" ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <AlertTriangle />
-              )}
-              Validate
-            </Button>
-            <Button
-              disabled={!!busy || payrun.status !== "DRAFT"}
-              onClick={handleProcess}
-            >
-              {busy === "compute payroll" ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <PlayCircle />
-              )}
-              Compute payroll
-            </Button>
-            <Button
-              disabled={!!busy || payrun.status !== "PROCESSING"}
-              onClick={handleFinalize}
-            >
-              {busy === "finalize" ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <CheckCircle2 />
-              )}
-              Finalize
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!!busy || payrun.status !== "COMPLETED"}
-              onClick={handleSend}
-            >
-              {busy === "send payslips" ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Mail />
-              )}
-              Send payslips
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={
-                !!busy || !["DRAFT", "PROCESSING"].includes(payrun.status)
-              }
-              onClick={handleCancel}
-            >
-              {busy === "cancel" ? (
-                <Loader2 className="size-4 animate-spin" />
-              ) : (
-                <Ban />
-              )}
-              Cancel
-            </Button>
+            {user?.role && (
+              <Button
+                variant="outline"
+                disabled={!!busy}
+                onClick={handleValidate}
+              >
+                {busy === "validate" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <AlertTriangle />
+                )}
+                Validate
+              </Button>
+            )}
+            {user?.role && (
+              <Button
+                disabled={!!busy || payrun.status !== "DRAFT"}
+                onClick={handleProcess}
+              >
+                {busy === "compute payroll" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <PlayCircle />
+                )}
+                Compute payroll
+              </Button>
+            )}
+            {user?.role && (
+              <Button
+                disabled={!!busy || payrun.status !== "PROCESSING"}
+                onClick={handleFinalize}
+              >
+                {busy === "finalize" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 />
+                )}
+                Finalize
+              </Button>
+            )}
+            {user?.role && (
+              <Button
+                variant="outline"
+                disabled={
+                  !!busy || !["COMPLETED", "PAID"].includes(payrun.status)
+                }
+                onClick={handleSend}
+              >
+                {busy === "send payslips" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Mail />
+                )}
+                Send payslips
+              </Button>
+            )}
+            {user?.role && (
+              <Button
+                variant="destructive"
+                disabled={
+                  !!busy || !["DRAFT", "PROCESSING"].includes(payrun.status)
+                }
+                onClick={handleCancel}
+              >
+                {busy === "cancel" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Ban />
+                )}
+                Cancel
+              </Button>
+            )}
+            {user?.role && (
+              <Button
+                disabled={!!busy || payrun.status !== "COMPLETED"}
+                onClick={handleMarkPaid}
+              >
+                {busy === "mark paid" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 />
+                )}
+                Mark paid
+              </Button>
+            )}
           </CardContent>
         </Card>
 

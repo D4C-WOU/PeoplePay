@@ -15,7 +15,13 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { ROLE_LABELS, canAccessHR, canAccessPayroll } from "@/lib/auth";
+import {
+  ROLE_LABELS,
+  canAccessHR,
+  canAccessPayroll,
+  canAccessSalary,
+  canAccessTimeAttendance,
+} from "@/lib/auth";
 import { NAV_ITEMS } from "@/lib/navigation";
 
 function NavItem({
@@ -46,7 +52,7 @@ function NavItem({
         title={collapsed ? item.label : undefined}
         className={`dashboard-nav-item${active ? " is-active" : ""}${collapsed ? " is-collapsed" : ""}`}
       >
-        <Icon className="size-[17px] shrink-0" />
+        <Icon className="size-4.25 shrink-0" />
         <span className={collapsed ? "sr-only" : ""}>{item.label}</span>
         {!collapsed && item.children?.length ? (
           <ChevronRight
@@ -94,8 +100,15 @@ export default function DashboardLayout({
   }, [user, loading, router]);
 
   useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
+    const restrictedForPayroll =
+      pathname.startsWith("/dashboard/attendance") ||
+      pathname.startsWith("/dashboard/time-off") ||
+      pathname.startsWith("/dashboard/work-schedules");
+
+    if (restrictedForPayroll && !canAccessTimeAttendance(user?.role)) {
+      router.replace("/dashboard");
+    }
+  }, [pathname, router, user?.role]);
 
   const visibleItems = useMemo(
     () =>
@@ -103,8 +116,11 @@ export default function DashboardLayout({
         if (["/dashboard/settings", "/dashboard/users"].includes(item.href)) {
           return user?.role === "ADMIN";
         }
-        if (["/dashboard/payroll", "/dashboard/salary"].includes(item.href)) {
+        if (item.href === "/dashboard/payroll") {
           return canAccessPayroll(user?.role);
+        }
+        if (item.href === "/dashboard/salary") {
+          return canAccessSalary(user?.role);
         }
         if (
           [
@@ -113,11 +129,18 @@ export default function DashboardLayout({
             "/dashboard/departments",
           ].includes(item.href)
         ) {
-          return (
-            canAccessHR(user?.role) ||
-            canAccessPayroll(user?.role) ||
-            user?.role === "MANAGER"
-          );
+          return canAccessHR(user?.role) || user?.role === "MANAGER";
+        }
+        if (item.href === "/dashboard/work-schedules") {
+          return user?.role === "ADMIN";
+        }
+        if (
+          ["/dashboard/attendance", "/dashboard/time-off"].includes(item.href)
+        ) {
+          return canAccessTimeAttendance(user?.role);
+        }
+        if (item.href === "/dashboard/payroll/payslips") {
+          return user?.role === "EMPLOYEE";
         }
         return true;
       }),

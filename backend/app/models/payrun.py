@@ -1,6 +1,7 @@
 import enum
 from datetime import date
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     Date,
@@ -17,11 +18,16 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.models.base import TimestampMixin, UUIDMixin
 
+if TYPE_CHECKING:
+    from app.models.payslip import Payslip
+    from app.models.salary_structure import SalaryStructure
+
 
 class PayrunStatus(str, enum.Enum):
     DRAFT = "DRAFT"
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
+    PAID = "PAID"
     CANCELLED = "CANCELLED"
 
 

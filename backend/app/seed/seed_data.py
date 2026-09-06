@@ -7,16 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 
-from app.models.user import (
-    AdminUser,
-    EmployeeUser,
-    HRManagerUser,
-    ManagerUser,
-    PayrollManagerUser,
-    PayrollUser,
-    User,
-    UserRole,
-)
+from app.models.user import User, UserRole
 
 from app.models.department import Department
 from app.models.employee import Employee, EmployeeStatus, EmployeeType
@@ -58,42 +49,28 @@ DEMO_USERS = [
         "role": UserRole.ADMIN,
         "password_env": "SEED_ADMIN_PASSWORD",
         "default_password": "admin@123",
-        "model": AdminUser,
+        "model": User,
     },
     {
         "email": "hr@peoplepay.com",
         "role": UserRole.HR_MANAGER,
         "password_env": "SEED_HR_PASSWORD",
         "default_password": "hr@123",
-        "model": HRManagerUser,
-    },
-    {
-        "email": "manager@peoplepay.com",
-        "role": UserRole.MANAGER,
-        "password_env": "SEED_MANAGER_PASSWORD",
-        "default_password": "manager@123",
-        "model": ManagerUser,
+        "model": User,
     },
     {
         "email": "payroll.manager@peoplepay.com",
         "role": UserRole.PAYROLL_MANAGER,
         "password_env": "SEED_PAYROLL_MANAGER_PASSWORD",
         "default_password": "payrollmanager@123",
-        "model": PayrollManagerUser,
-    },
-    {
-        "email": "payroll.user@peoplepay.com",
-        "role": UserRole.PAYROLL_USER,
-        "password_env": "SEED_PAYROLL_USER_PASSWORD",
-        "default_password": "payrolluser@123",
-        "model": PayrollUser,
+        "model": User,
     },
     {
         "email": "employee@peoplepay.com",
         "role": UserRole.EMPLOYEE,
         "password_env": "SEED_EMPLOYEE_PASSWORD",
         "default_password": "employee@123",
-        "model": EmployeeUser,
+        "model": User,
     },
 ]
 

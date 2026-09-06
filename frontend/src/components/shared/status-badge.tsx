@@ -48,7 +48,7 @@ const STATUS_STYLES: Record<string, { label: string; fg: string; bg: string }> =
       bg: "var(--pp-info-bg)",
     },
     COMPLETED: {
-      label: "Completed",
+      label: "Finalized",
       fg: "var(--pp-success)",
       bg: "var(--pp-success-bg)",
     },

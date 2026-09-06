@@ -28,7 +28,12 @@ export interface SalaryRule {
   is_active: boolean;
 }
 
-export type PayrunStatus = "DRAFT" | "PROCESSING" | "COMPLETED" | "CANCELLED";
+export type PayrunStatus =
+  | "DRAFT"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "PAID"
+  | "CANCELLED";
 
 export interface Payrun {
   id: string;

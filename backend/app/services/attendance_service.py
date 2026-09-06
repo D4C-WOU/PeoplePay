@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -16,6 +18,13 @@ from app.utils.calculations import (
     calculate_worked_hours,
 )
 from app.utils.pagination import paginate_scalars
+
+
+def _normalize_datetime(value: datetime | None) -> datetime | None:
+    if value is None or value.tzinfo is None:
+        return value
+
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 def _validate_employee(
@@ -96,6 +105,11 @@ def create_attendance(
 
     check_in = data.get("check_in")
     check_out = data.get("check_out")
+
+    data["check_in"] = _normalize_datetime(check_in)
+    data["check_out"] = _normalize_datetime(check_out)
+    check_in = data["check_in"]
+    check_out = data["check_out"]
 
     if check_in is not None and check_out is not None and check_out < check_in:
         raise ValueError("check_out cannot be before check_in")
@@ -185,6 +199,11 @@ def update_attendance(
     record: AttendanceRecord,
     data: dict,
 ) -> AttendanceRecord:
+    if "check_in" in data:
+        data["check_in"] = _normalize_datetime(data["check_in"])
+    if "check_out" in data:
+        data["check_out"] = _normalize_datetime(data["check_out"])
+
     if "work_schedule_id" in data:
         _validate_schedule(
             db,

@@ -105,6 +105,7 @@ export const payrunApi = {
   process: (id: string) => apiRequest<Payrun>(`/payruns/${id}/process`, { method: "POST" }),
   finalize: (id: string) => apiRequest<Payrun>(`/payruns/${id}/finalize`, { method: "POST" }),
   cancel: (id: string) => apiRequest<Payrun>(`/payruns/${id}/cancel`, { method: "POST" }),
+  markPaid: (id: string) => apiRequest<Payrun>(`/payruns/${id}/paid`, { method: "POST" }),
   sendPayslips: (id: string) =>
     apiRequest<{ total: number; sent: number; failed: number }>(
       `/payruns/${id}/send-payslips`,

@@ -34,6 +34,7 @@ import {
   payrunApi,
 } from "@/hooks/usePayroll";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useAuth } from "@/hooks/useAuth";
 import { ApiError } from "@/lib/api";
 
 const PAGE_SIZE = 10;
@@ -265,6 +266,7 @@ function NewPayrunWizard({ onCreated }: { onCreated: () => void }) {
 }
 
 export default function PayrunsPage() {
+  const { user } = useAuth();
   const [status, setStatus] = useState<string>("all");
   const [page, setPage] = useState(1);
   const {
@@ -290,12 +292,14 @@ export default function PayrunsPage() {
         title="Pay Runs"
         description="Select employees explicitly — the payrun contains only who you choose."
         actions={
-          <NewPayrunWizard
-            onCreated={() => {
-              setPage(1);
-              reload();
-            }}
-          />
+          user?.role ? (
+            <NewPayrunWizard
+              onCreated={() => {
+                setPage(1);
+                reload();
+              }}
+            />
+          ) : undefined
         }
       />
       <div className="flex-1 space-y-4 p-4 sm:p-6">
@@ -314,6 +318,7 @@ export default function PayrunsPage() {
                 <SelectItem value="DRAFT">Draft</SelectItem>
                 <SelectItem value="PROCESSING">Processing</SelectItem>
                 <SelectItem value="COMPLETED">Completed</SelectItem>
+                <SelectItem value="PAID">Paid</SelectItem>
                 <SelectItem value="CANCELLED">Cancelled</SelectItem>
               </SelectContent>
             </Select>
