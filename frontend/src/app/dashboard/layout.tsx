@@ -113,34 +113,29 @@ export default function DashboardLayout({
   const visibleItems = useMemo(
     () =>
       NAV_ITEMS.filter((item) => {
-        if (["/dashboard/settings", "/dashboard/users"].includes(item.href)) {
-          return user?.role === "ADMIN";
+        if (["/dashboard/settings", "/dashboard/users", "/dashboard/departments", "/dashboard/work-schedules"].includes(item.href)) {
+          return user?.role === "ADMIN" || user?.role === "HR_MANAGER";
         }
-        if (item.href === "/dashboard/payroll") {
-          return canAccessPayroll(user?.role);
-        }
-        if (item.href === "/dashboard/salary") {
+        if (item.group === "Configuration" && item.href.startsWith("/dashboard/salary")) {
           return canAccessSalary(user?.role);
         }
-        if (
-          [
-            "/dashboard/employees",
-            "/dashboard/contracts",
-            "/dashboard/departments",
-          ].includes(item.href)
-        ) {
+        if (item.group === "Configuration" && item.href === "/dashboard/contracts") {
           return canAccessHR(user?.role) || user?.role === "MANAGER";
         }
-        if (item.href === "/dashboard/work-schedules") {
-          return user?.role === "ADMIN";
-        }
-        if (
-          ["/dashboard/attendance", "/dashboard/time-off"].includes(item.href)
-        ) {
-          return canAccessTimeAttendance(user?.role);
+        if (item.href === "/dashboard/payroll/payruns") {
+          return canAccessPayroll(user?.role);
         }
         if (item.href === "/dashboard/payroll/payslips") {
-          return user?.role === "EMPLOYEE";
+          return canAccessPayroll(user?.role) || user?.role === "EMPLOYEE";
+        }
+        if (item.href === "/dashboard/employees") {
+          return canAccessHR(user?.role) || user?.role === "MANAGER";
+        }
+        if (item.group === "People" && ["/dashboard/attendance", "/dashboard/time-off"].includes(item.href)) {
+          return canAccessTimeAttendance(user?.role) || user?.role === "EMPLOYEE";
+        }
+        if (item.href === "/dashboard/reports") {
+          return user?.role !== "EMPLOYEE";
         }
         return true;
       }),

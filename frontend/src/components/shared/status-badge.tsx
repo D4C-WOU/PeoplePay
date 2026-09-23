@@ -15,7 +15,7 @@ const STATUS_STYLES: Record<string, { label: string; fg: string; bg: string }> =
       fg: "var(--pp-danger)",
       bg: "var(--pp-danger-bg)",
     },
-    INACTIVE: { label: "Inactive", fg: "#64748b", bg: "#f1f5f9" },
+    INACTIVE: { label: "Inactive", fg: "var(--text-2)", bg: "#f1f2f3" },
     PRESENT: {
       label: "Present",
       fg: "var(--pp-success)",
@@ -41,7 +41,7 @@ const STATUS_STYLES: Record<string, { label: string; fg: string; bg: string }> =
       fg: "var(--pp-info)",
       bg: "var(--pp-info-bg)",
     },
-    DRAFT: { label: "Draft", fg: "#64748b", bg: "#f1f5f9" },
+    DRAFT: { label: "Draft", fg: "var(--text-2)", bg: "#f1f2f3" },
     PROCESSING: {
       label: "Processing",
       fg: "var(--pp-info)",
@@ -82,14 +82,20 @@ const STATUS_STYLES: Record<string, { label: string; fg: string; bg: string }> =
       fg: "var(--pp-success)",
       bg: "var(--pp-success-bg)",
     },
-    EXPIRED: { label: "Expired", fg: "#64748b", bg: "#f1f5f9" },
+    EXPIRED: { label: "Expired", fg: "var(--text-2)", bg: "#f1f2f3" },
   };
 
+/**
+ * Single source of truth for status color/label across every HR & payroll
+ * module (employees, attendance, time-off, contracts, payruns, payslips).
+ * Uses a dot + restrained tint rather than a colorful "AI dashboard" pill so
+ * meaning stays consistent and readable at a glance in dense tables.
+ */
 export function StatusBadge({ status }: { status: string }) {
   const config = STATUS_STYLES[status] ?? {
     label: status.replaceAll("_", " "),
-    fg: "#64748b",
-    bg: "#f1f5f9",
+    fg: "var(--text-2)",
+    bg: "#f1f2f3",
   };
   return (
     <span className="badge" style={{ color: config.fg, background: config.bg }}>
