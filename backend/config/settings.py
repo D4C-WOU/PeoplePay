@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     "attendance",
     "time_off",
     "payroll",
+    # seed data
+    "seed",
 ]
 
 AUTH_USER_MODEL = "users.User"
