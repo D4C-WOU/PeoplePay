@@ -25,6 +25,8 @@ from .views import (
     MyTimeOffView,
     SalaryStructureViewSet,
     SalaryRuleViewSet,
+    PayrunViewSet,
+    PayslipViewSet,
 )
 
 router = DefaultRouter()
@@ -114,6 +116,20 @@ router.register(
     "salary-rules",
     SalaryRuleViewSet,
     basename="salary-rule",
+)
+
+# Register the payruns API
+router.register(
+    "payruns",
+    PayrunViewSet,
+    basename="payrun",
+)
+
+# Register the payslips API
+router.register(
+    "payslips",
+    PayslipViewSet,
+    basename="payslip",
 )
 
 urlpatterns = [

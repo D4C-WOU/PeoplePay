@@ -14,6 +14,12 @@ from payroll.models import (
     SalaryRule,
 )
 
+from payroll.models import (
+    Payrun,
+    Payslip,
+    PayslipLine,
+)
+
 
 class CurrentUserSerializer(serializers.ModelSerializer):
     # Return the user's basic account information
@@ -470,4 +476,144 @@ class SalaryRuleSerializer(serializers.ModelSerializer):
         read_only_fields = [
             "id",
             "salary_structure_name",
+        ]
+
+
+class PayslipLineSerializer(serializers.ModelSerializer):
+    # Show the salary rule name used for this line
+    rule_name = serializers.CharField(
+        source="name",
+        read_only=True,
+    )
+
+    class Meta:
+        model = PayslipLine
+        fields = [
+            "id",
+            "salary_rule",
+            "rule_name",
+            "code",
+            "name",
+            "category",
+            "sequence",
+            "base_amount",
+            "calculated_amount",
+            "description",
+        ]
+        read_only_fields = [
+            "id",
+            "rule_name",
+        ]
+
+
+class PayslipSerializer(serializers.ModelSerializer):
+    # Show employee information in the payslip response
+    employee_name = serializers.CharField(
+        source="employee_name_snapshot",
+        read_only=True,
+    )
+
+    # Show employee number captured when payroll was generated
+    employee_number = serializers.CharField(
+        source="employee_number_snapshot",
+        read_only=True,
+    )
+
+    # Show the salary structure used for this payslip
+    salary_structure_name = serializers.CharField(
+        source="salary_structure.name",
+        read_only=True,
+    )
+
+    # Include individual salary rule calculations
+    lines = PayslipLineSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = Payslip
+        fields = [
+            "id",
+            "payrun",
+            "employee",
+            "employee_name",
+            "employee_number",
+            "contract",
+            "salary_structure",
+            "salary_structure_name",
+            "period_start",
+            "period_end",
+            "worked_days",
+            "currency",
+            "gross_amount",
+            "deduction_amount",
+            "net_amount",
+            "status",
+            "generated_at",
+            "lines",
+        ]
+        read_only_fields = [
+            "id",
+            "employee_name",
+            "employee_number",
+            "salary_structure_name",
+            "gross_amount",
+            "deduction_amount",
+            "net_amount",
+            "status",
+            "generated_at",
+            "lines",
+        ]
+
+
+class PayrunSerializer(serializers.ModelSerializer):
+    # Show salary structure name in the payrun response
+    salary_structure_name = serializers.CharField(
+        source="salary_structure.name",
+        read_only=True,
+    )
+
+    # Show the number of employees selected for this payrun
+    selected_employee_count = serializers.SerializerMethodField()
+
+    # Include generated payslips
+    payslips = PayslipSerializer(
+        many=True,
+        read_only=True,
+    )
+
+    def get_selected_employee_count(self, obj):
+        # Count employees selected for this payrun
+        return obj.selected_employees.count()
+
+    class Meta:
+        model = Payrun
+        fields = [
+            "id",
+            "name",
+            "salary_structure",
+            "salary_structure_name",
+            "period_start",
+            "period_end",
+            "payment_date",
+            "status",
+            "selected_employees",
+            "selected_employee_count",
+            "employee_count",
+            "gross_total",
+            "deduction_total",
+            "net_total",
+            "payslips",
+        ]
+        read_only_fields = [
+            "id",
+            "salary_structure_name",
+            "selected_employee_count",
+            "employee_count",
+            "gross_total",
+            "deduction_total",
+            "net_total",
+            "status",
+            "payslips",
         ]
