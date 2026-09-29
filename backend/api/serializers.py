@@ -617,3 +617,23 @@ class PayrunSerializer(serializers.ModelSerializer):
             "status",
             "payslips",
         ]
+
+
+class DashboardSerializer(serializers.Serializer):
+    # Employee overview
+    employees = serializers.DictField()
+
+    # Payroll overview
+    payroll = serializers.DictField()
+
+    # Attendance overview
+    attendance = serializers.DictField()
+
+    # Time-off overview
+    time_off = serializers.DictField()
+
+    # Department headcount
+    departments = serializers.ListField()
+
+    # Monthly payroll trend
+    monthly_salary_trend = serializers.ListField()

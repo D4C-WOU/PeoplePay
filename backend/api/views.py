@@ -35,6 +35,8 @@ from payroll.models import (
     Payslip,
     PayslipLine,
 )
+
+from .dashboard import get_dashboard_data
 from payroll.services import calculate_salary_rules
 from contracts.services import get_applicable_contract
 
@@ -67,6 +69,7 @@ from .serializers import (
     SalaryStructureSerializer,
     PayrunSerializer,
     PayslipSerializer,
+    DashboardSerializer,
 )
 
 
@@ -1325,3 +1328,17 @@ class PayslipViewSet(ModelViewSet):
             payrun.period_start,
             payrun.period_end,
         )
+
+
+class DashboardView(APIView):
+    # Dashboard is available to authenticated users
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Build the current dashboard data
+        data = get_dashboard_data()
+
+        # Return the dashboard as JSON
+        serializer = DashboardSerializer(data)
+
+        return Response(serializer.data)

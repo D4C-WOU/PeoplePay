@@ -27,6 +27,7 @@ from .views import (
     SalaryRuleViewSet,
     PayrunViewSet,
     PayslipViewSet,
+    DashboardView,
 )
 
 router = DefaultRouter()
@@ -189,6 +190,11 @@ urlpatterns = [
         "rbac/admin/",
         AdminTestView.as_view(),
         name="rbac_admin",
+    ),
+    path(
+        "dashboard/",
+        DashboardView.as_view(),
+        name="dashboard",
     ),
 ]
 
