@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   ChevronRight,
@@ -35,12 +35,16 @@ function NavItem({
   collapsed: boolean;
   onNavigate?: () => void;
 }) {
+  // The parent item is active when its own route matches.
+  // For grouped pages, a child route can also make the parent active.
   const isActive = item.exact
     ? pathname === item.href
     : pathname.startsWith(item.href) && item.href !== "/dashboard";
+
   const childActive = item.children?.some((child) =>
     pathname.startsWith(child.href),
   );
+
   const Icon = item.icon;
   const active = isActive || childActive;
 
@@ -50,10 +54,14 @@ function NavItem({
         href={item.href}
         onClick={onNavigate}
         title={collapsed ? item.label : undefined}
-        className={`dashboard-nav-item${active ? " is-active" : ""}${collapsed ? " is-collapsed" : ""}`}
+        className={`dashboard-nav-item${active ? " is-active" : ""}${
+          collapsed ? " is-collapsed" : ""
+        }`}
       >
         <Icon className="size-4.25 shrink-0" />
+
         <span className={collapsed ? "sr-only" : ""}>{item.label}</span>
+
         {!collapsed && item.children?.length ? (
           <ChevronRight
             className={`dashboard-nav-chevron${active ? " is-open" : ""}`}
@@ -65,12 +73,15 @@ function NavItem({
         <ul className="dashboard-subnav">
           {item.children.map((child) => {
             const selected = pathname.startsWith(child.href);
+
             return (
               <li key={child.href}>
                 <Link
                   href={child.href}
                   onClick={onNavigate}
-                  className={`dashboard-subnav-item${selected ? " is-active" : ""}`}
+                  className={`dashboard-subnav-item${
+                    selected ? " is-active" : ""
+                  }`}
                 >
                   <span className="dashboard-subnav-line" />
                   {child.label}
@@ -90,53 +101,89 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, loading, logout } = useAuth();
+
   const router = useRouter();
   const pathname = usePathname();
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // The dashboard is a protected area.
+  // If authentication finishes loading and there is no user,
+  // send the visitor back to the login page.
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
+    if (!loading && !user) {
+      router.replace("/login");
+    }
   }, [user, loading, router]);
 
+  // The sidebar hides restricted sections, but this check also protects
+  // direct URL navigation such as manually entering /dashboard/payroll.
   useEffect(() => {
-    const restrictedForPayroll =
+    const restrictedForTimeAttendance =
       pathname.startsWith("/dashboard/attendance") ||
       pathname.startsWith("/dashboard/time-off") ||
       pathname.startsWith("/dashboard/work-schedules");
 
-    if (restrictedForPayroll && !canAccessTimeAttendance(user?.role)) {
+    if (restrictedForTimeAttendance && !canAccessTimeAttendance(user?.role)) {
       router.replace("/dashboard");
     }
   }, [pathname, router, user?.role]);
 
+  // Navigation is derived from the authenticated user's role.
+  // The backend remains the real security boundary; this only keeps
+  // irrelevant pages out of the user's interface.
   const visibleItems = useMemo(
     () =>
       NAV_ITEMS.filter((item) => {
-        if (["/dashboard/settings", "/dashboard/users", "/dashboard/departments", "/dashboard/work-schedules"].includes(item.href)) {
+        if (
+          [
+            "/dashboard/settings",
+            "/dashboard/users",
+            "/dashboard/departments",
+            "/dashboard/work-schedules",
+          ].includes(item.href)
+        ) {
           return user?.role === "ADMIN" || user?.role === "HR_MANAGER";
         }
-        if (item.group === "Configuration" && item.href.startsWith("/dashboard/salary")) {
+
+        if (
+          item.group === "Configuration" &&
+          item.href.startsWith("/dashboard/salary")
+        ) {
           return canAccessSalary(user?.role);
         }
-        if (item.group === "Configuration" && item.href === "/dashboard/contracts") {
-          return canAccessHR(user?.role) || user?.role === "MANAGER";
+
+        if (
+          item.group === "Configuration" &&
+          item.href === "/dashboard/contracts"
+        ) {
+          return canAccessHR(user?.role) || user?.role === "HR_PAYROLL_MANAGER";
         }
+
         if (item.href === "/dashboard/payroll/payruns") {
           return canAccessPayroll(user?.role);
         }
+
         if (item.href === "/dashboard/payroll/payslips") {
           return canAccessPayroll(user?.role) || user?.role === "EMPLOYEE";
         }
+
         if (item.href === "/dashboard/employees") {
-          return canAccessHR(user?.role) || user?.role === "MANAGER";
+          return canAccessHR(user?.role) || user?.role === "HR_PAYROLL_MANAGER";
         }
-        if (item.group === "People" && ["/dashboard/attendance", "/dashboard/time-off"].includes(item.href)) {
-          return canAccessTimeAttendance(user?.role) || user?.role === "EMPLOYEE";
+
+        if (
+          item.group === "People" &&
+          ["/dashboard/attendance", "/dashboard/time-off"].includes(item.href)
+        ) {
+          return canAccessTimeAttendance(user?.role);
         }
+
         if (item.href === "/dashboard/reports") {
           return user?.role !== "EMPLOYEE";
         }
+
         return true;
       }),
     [user?.role],
@@ -151,6 +198,8 @@ export default function DashboardLayout({
           .slice(-1)[0]
           ?.replaceAll("-", " ") ?? "Workspace");
 
+  // Prevent the dashboard UI from rendering before we know
+  // whether a valid session exists.
   if (loading) {
     return (
       <div className="dashboard-loading">
@@ -163,7 +212,11 @@ export default function DashboardLayout({
     );
   }
 
-  if (!user) return null;
+  // The redirect effect above handles unauthenticated users.
+  // Returning null prevents protected content from flashing briefly.
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="dashboard-shell">
@@ -176,7 +229,9 @@ export default function DashboardLayout({
       )}
 
       <aside
-        className={`dashboard-sidebar${sidebarCollapsed ? " is-collapsed" : ""}${sidebarOpen ? " is-mobile-open" : ""}`}
+        className={`dashboard-sidebar${
+          sidebarCollapsed ? " is-collapsed" : ""
+        }${sidebarOpen ? " is-mobile-open" : ""}`}
       >
         <div className="dashboard-sidebar-top">
           <Link
@@ -185,6 +240,7 @@ export default function DashboardLayout({
             onClick={() => setSidebarOpen(false)}
           >
             <span className="dashboard-brand-mark">P3</span>
+
             <span className={sidebarCollapsed ? "sr-only" : ""}>
               <strong>PeoplePay360</strong>
               <small>HR &amp; Payroll ops</small>
@@ -218,6 +274,7 @@ export default function DashboardLayout({
                   item.group !== visibleItems[index - 1].group) && (
                   <p className="dashboard-nav-group">{item.group}</p>
                 )}
+
               <NavItem
                 item={item}
                 pathname={pathname}
@@ -233,11 +290,13 @@ export default function DashboardLayout({
             <span className="dashboard-avatar">
               {user.email[0].toUpperCase()}
             </span>
+
             <span className={sidebarCollapsed ? "sr-only" : "min-w-0"}>
               <strong>{user.email.split("@")[0]}</strong>
               <small>{ROLE_LABELS[user.role]}</small>
             </span>
           </div>
+
           <button
             onClick={logout}
             className="dashboard-signout"
@@ -269,9 +328,11 @@ export default function DashboardLayout({
             <button aria-label="Search" title="Search">
               <Search />
             </button>
+
             <button aria-label="Notifications" title="Notifications">
               <Bell />
             </button>
+
             <span className="dashboard-topbar-avatar">
               {user.email[0].toUpperCase()}
             </span>
@@ -279,7 +340,9 @@ export default function DashboardLayout({
         </header>
 
         <div
-          className={`dashboard-content dashboard-route-${pathname.replace(/\//g, "-").replace(/^-|-$/g, "") || "overview"}`}
+          className={`dashboard-content dashboard-route-${
+            pathname.replace(/\//g, "-").replace(/^-|-$/g, "") || "overview"
+          }`}
         >
           {children}
         </div>

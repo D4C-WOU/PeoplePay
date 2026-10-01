@@ -35,6 +35,8 @@ const FEATURES = [
   },
 ];
 
+// These are only demo email presets.
+// The password is intentionally not stored in the frontend.
 const DEMO_ACCOUNTS = [
   "admin@peoplepay.com",
   "hr@peoplepay.com",
@@ -45,24 +47,35 @@ const DEMO_ACCOUNTS = [
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
+
   const emailId = useId();
   const passwordId = useId();
 
   const [email, setEmail] = useState("admin@peoplepay.com");
   const [password, setPassword] = useState("");
+
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (loading) return;
+
+    if (loading) {
+      return;
+    }
 
     setLoading(true);
     setError(null);
 
     try {
-      await login({ email: email.trim(), password });
+      // AuthContext owns the actual authentication flow.
+      // The login page only collects credentials and handles the result.
+      await login({
+        email: email.trim(),
+        password,
+      });
+
       router.replace("/dashboard");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Invalid credentials");
@@ -83,11 +96,13 @@ export default function LoginPage() {
 
           <div className="login-brand-copy">
             <p className="login-kicker">PeoplePay360</p>
+
             <h1>
               HR &amp; payroll,
               <br />
               without the busywork.
             </h1>
+
             <p className="login-brand-description">
               One connected workspace for employee records, attendance, leave,
               and payroll processing—with the detail and control your team
@@ -101,6 +116,7 @@ export default function LoginPage() {
                 <div className="login-feature-icon" aria-hidden="true">
                   <Icon size={18} strokeWidth={1.8} />
                 </div>
+
                 <div>
                   <h2>{title}</h2>
                   <p>{desc}</p>
@@ -112,8 +128,11 @@ export default function LoginPage() {
 
         <div className="login-security">
           <ShieldCheck size={15} />
+
           <span>Secure workspace access</span>
+
           <span className="login-security-dot" aria-hidden="true" />
+
           <span>© {new Date().getFullYear()} PeoplePay360</span>
         </div>
       </section>
@@ -130,13 +149,16 @@ export default function LoginPage() {
               <span className="login-status-dot" />
               Workspace sign in
             </div>
+
             <h2>Welcome back</h2>
+
             <p>Sign in to continue to your PeoplePay360 workspace.</p>
           </div>
 
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             <div className="login-field">
               <label htmlFor={emailId}>Work email</label>
+
               <input
                 id={emailId}
                 name="email"
@@ -159,6 +181,7 @@ export default function LoginPage() {
               <div className="login-label-row">
                 <label htmlFor={passwordId}>Password</label>
               </div>
+
               <div className="login-password-wrap">
                 <input
                   id={passwordId}
@@ -173,6 +196,7 @@ export default function LoginPage() {
                   aria-invalid={Boolean(error)}
                   className="login-input login-password-input"
                 />
+
                 <button
                   type="button"
                   className="login-password-toggle"
@@ -189,6 +213,7 @@ export default function LoginPage() {
             {error && (
               <div className="login-error" role="alert" aria-live="polite">
                 <span className="login-error-icon">!</span>
+
                 <div>
                   <strong>Sign in failed</strong>
                   <p>{error}</p>
@@ -215,21 +240,26 @@ export default function LoginPage() {
             <div className="login-demo-header">
               <div>
                 <p className="login-demo-title">Quick demo access</p>
+
                 <p className="login-demo-subtitle">
                   Pick a role to prefill the email address.
                 </p>
               </div>
+
               <span className="login-demo-count">{DEMO_ACCOUNTS.length}</span>
             </div>
 
             <div className="login-demo-list">
               {DEMO_ACCOUNTS.map((account) => {
                 const active = email === account;
+
                 return (
                   <button
                     key={account}
                     type="button"
-                    className={`login-demo-account${active ? " is-active" : ""}`}
+                    className={`login-demo-account${
+                      active ? " is-active" : ""
+                    }`}
                     onClick={() => {
                       setEmail(account);
                       setError(null);
@@ -239,6 +269,7 @@ export default function LoginPage() {
                     <span className="login-demo-check" aria-hidden="true">
                       {active && <Check size={13} strokeWidth={2.5} />}
                     </span>
+
                     <span>{account}</span>
                   </button>
                 );
