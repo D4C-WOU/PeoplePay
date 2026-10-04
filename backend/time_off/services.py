@@ -93,3 +93,29 @@ def reject_time_off_request(request, reviewer):
 
     # Rejected requests do not change any allocation
     return request
+
+
+@transaction.atomic
+def approve_time_off_allocation(allocation, reviewer):
+    # Only pending allocations can enter the approved state.
+    if allocation.status != TimeOffAllocation.Status.PENDING:
+        raise ValidationError("Only pending allocations can be approved.")
+
+    allocation.status = TimeOffAllocation.Status.APPROVED
+    allocation.reviewed_by = reviewer
+    allocation.reviewed_at = timezone.now()
+    allocation.save(update_fields=["status", "reviewed_by", "reviewed_at"])
+    return allocation
+
+
+@transaction.atomic
+def reject_time_off_allocation(allocation, reviewer):
+    # Only pending allocations can be rejected.
+    if allocation.status != TimeOffAllocation.Status.PENDING:
+        raise ValidationError("Only pending allocations can be rejected.")
+
+    allocation.status = TimeOffAllocation.Status.REJECTED
+    allocation.reviewed_by = reviewer
+    allocation.reviewed_at = timezone.now()
+    allocation.save(update_fields=["status", "reviewed_by", "reviewed_at"])
+    return allocation

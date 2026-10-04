@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.utils import timezone
 
 # Employee Leave Management
 
@@ -35,7 +36,17 @@ class TimeOffType(models.Model):
         default=True,
     )
 
-    # is it a paid or unpaid leave
+    # Controls whether a submitted leave request needs HR approval.
+    requires_approval = models.BooleanField(
+        default=True,
+    )
+
+    # Controls whether this leave type should be considered by payroll.
+    affects_payroll = models.BooleanField(
+        default=False,
+    )
+
+    # Kept for simple reporting about whether the leave is paid.
     is_paid = models.BooleanField(
         default=True,
     )
@@ -138,6 +149,16 @@ class TimeOffAllocation(models.Model):
             0,
         )
 
+    # Compatibility aliases keep the API vocabulary readable without
+    # duplicating the stored database values.
+    @property
+    def taken_days(self):
+        return self.used_days
+
+    @property
+    def valid_to(self):
+        return self.valid_until
+
     def clean(self):
         if self.valid_until < self.valid_from:
             raise ValidationError("Allocation end date cannot be before start date.")
@@ -206,6 +227,16 @@ class TimeOffRequest(models.Model):
         blank=True,
     )
 
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    @property
+    def approved_by(self):
+        return self.reviewed_by_id
+
+    @property
+    def approved_at(self):
+        return self.reviewed_at
+
     class Meta:
         ordering = ["-start_date"]
 
@@ -226,6 +257,11 @@ class TimeOffRequest(models.Model):
 
         if self.requested_days <= 0:
             raise ValidationError("Requested days must be greater than zero.")
+
+    @property
+    def duration_days(self):
+        # API-friendly alias used by the frontend table.
+        return self.requested_days
 
     def __str__(self):
         return (
