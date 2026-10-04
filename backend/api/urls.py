@@ -5,6 +5,15 @@ from rest_framework_simplejwt.views import (
 )
 from rest_framework.routers import DefaultRouter
 
+from time_off.views import (
+    ApproveTimeOffAllocationView,
+    RejectTimeOffAllocationView,
+    CreateTimeOffAllocationView,
+    CreateTimeOffRequestView,
+)
+from users.api import UserListView, UserUpdateView
+from .dashboard_api import FilteredDashboardView
+
 from .views import (
     AdminTestView,
     CurrentUserView,
@@ -27,7 +36,6 @@ from .views import (
     SalaryRuleViewSet,
     PayrunViewSet,
     PayslipViewSet,
-    DashboardView,
 )
 
 router = DefaultRouter()
@@ -136,6 +144,36 @@ router.register(
 urlpatterns = [
     # Login and receive access + refresh tokens
     path(
+        "users/",
+        UserListView.as_view(),
+        name="user_list",
+    ),
+    path(
+        "users/<int:pk>/",
+        UserUpdateView.as_view(),
+        name="user_update",
+    ),
+    path(
+        "time-off/allocations/create/",
+        CreateTimeOffAllocationView.as_view(),
+        name="time_off_allocation_create",
+    ),
+    path(
+        "time-off/requests/create/",
+        CreateTimeOffRequestView.as_view(),
+        name="time_off_request_create",
+    ),
+    path(
+        "time-off/allocations/<int:pk>/approve/",
+        ApproveTimeOffAllocationView.as_view(),
+        name="time_off_allocation_approve",
+    ),
+    path(
+        "time-off/allocations/<int:pk>/reject/",
+        RejectTimeOffAllocationView.as_view(),
+        name="time_off_allocation_reject",
+    ),
+    path(
         "auth/login/",
         TokenObtainPairView.as_view(),
         name="token_obtain_pair",
@@ -193,7 +231,7 @@ urlpatterns = [
     ),
     path(
         "dashboard/",
-        DashboardView.as_view(),
+        FilteredDashboardView.as_view(),
         name="dashboard",
     ),
 ]
