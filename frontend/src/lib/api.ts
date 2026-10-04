@@ -5,25 +5,50 @@ import {
   setToken,
 } from "@/lib/auth";
 
+
+/**
+ * Base URL for the Django REST API.
+ *
+ * Development:
+ * http://localhost:8000/api
+ *
+ * Production deployments can override this through
+ * NEXT_PUBLIC_API_URL.
+ */
 export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api"
 ).replace(/\/+$/, "");
+
 
 export class ApiError extends Error {
   status: number;
 
   constructor(message: string, status: number) {
     super(message);
+    this.name = "ApiError";
     this.status = status;
   }
 }
 
+
 type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE" | "PUT";
+
   body?: unknown;
-  params?: Record<string, string | number | boolean | undefined | null>;
+
+  params?: Record<
+    string,
+    string | number | boolean | undefined | null
+  >;
 };
 
+
+/**
+ * Django's DefaultRouter and API paths use trailing slashes.
+ *
+ * Keeping this in one place means individual pages do not have to
+ * remember whether an endpoint requires a slash.
+ */
 function normalizePath(path: string): string {
   if (!path || path.endsWith("/")) {
     return path;
@@ -32,6 +57,10 @@ function normalizePath(path: string): string {
   return `${path}/`;
 }
 
+
+/**
+ * Convert an object into a URL query string.
+ */
 function buildQuery(params?: RequestOptions["params"]): string {
   if (!params) {
     return "";
@@ -40,7 +69,11 @@ function buildQuery(params?: RequestOptions["params"]): string {
   const search = new URLSearchParams();
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+    ) {
       search.append(key, String(value));
     }
   });
@@ -50,6 +83,16 @@ function buildQuery(params?: RequestOptions["params"]): string {
   return queryString ? `?${queryString}` : "";
 }
 
+
+/**
+ * Convert Django REST Framework error responses into a readable message.
+ *
+ * DRF validation errors commonly look like:
+ *
+ * {
+ *   "field_name": ["This field is required."]
+ * }
+ */
 async function parseErrorResponse(
   response: Response,
   fallbackMessage: string,
@@ -61,21 +104,21 @@ async function parseErrorResponse(
       return data.detail;
     }
 
-    if (Array.isArray(data?.detail) && data.detail[0]?.msg) {
-      return data.detail[0].msg;
-    }
-
     if (typeof data?.message === "string") {
       return data.message;
     }
 
-    // Django REST Framework validation errors often look like:
-    // { "field": ["This field is required."] }
+    if (Array.isArray(data?.detail) && data.detail[0]?.msg) {
+      return data.detail[0].msg;
+    }
+
     if (data && typeof data === "object") {
       const messages = Object.entries(data)
         .flatMap(([field, value]) => {
           if (Array.isArray(value)) {
-            return value.map((message) => `${field}: ${message}`);
+            return value.map(
+              (message) => `${field}: ${message}`,
+            );
           }
 
           return [`${field}: ${String(value)}`];
@@ -87,12 +130,16 @@ async function parseErrorResponse(
       }
     }
   } catch {
-    // Some responses do not contain JSON.
+    // Some server responses do not contain JSON.
   }
 
   return fallbackMessage;
 }
 
+
+/**
+ * Ask Django for a new access token using the stored refresh token.
+ */
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = getRefreshToken();
 
@@ -101,15 +148,18 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      `${API_BASE_URL}/auth/refresh/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          refresh: refreshToken,
+        }),
       },
-      body: JSON.stringify({
-        refresh: refreshToken,
-      }),
-    });
+    );
 
     if (!response.ok) {
       clearToken();
@@ -129,6 +179,18 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+
+/**
+ * Main API request helper used throughout the frontend.
+ *
+ * Responsibilities:
+ * - attach JWT access token
+ * - build query parameters
+ * - serialize JSON request bodies
+ * - refresh expired access tokens
+ * - normalize DRF errors
+ * - notify the auth provider when the session is unrecoverable
+ */
 export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
@@ -145,63 +207,61 @@ export async function apiRequest<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  const url =
+    `${API_BASE_URL}` +
+    `${normalizePath(path)}` +
+    `${buildQuery(options.params)}`;
+
   let response: Response;
 
   try {
-    response = await fetch(
-      `${API_BASE_URL}${normalizePath(path)}${buildQuery(options.params)}`,
-      {
-        method: options.method ?? "GET",
-        headers,
-        body:
-          options.body !== undefined
-            ? JSON.stringify(options.body)
-            : undefined,
-      },
-    );
+    response = await fetch(url, {
+      method: options.method ?? "GET",
+      headers,
+      body:
+        options.body !== undefined
+          ? JSON.stringify(options.body)
+          : undefined,
+    });
   } catch {
     throw new ApiError(
-      "Could not reach the server. Check that the backend is running.",
+      "Could not reach the server. Check that the Django backend is running on port 8000.",
       0,
     );
   }
 
-  // Access tokens expire. Before forcing the user to log in again,
-  // use the refresh token to obtain a new access token.
+  /*
+   * If the access token expired, try the refresh token once.
+   */
   if (response.status === 401 && token) {
     const newAccessToken = await refreshAccessToken();
 
     if (newAccessToken) {
-      const retryHeaders: Record<string, string> = {
-        ...headers,
-        Authorization: `Bearer ${newAccessToken}`,
-      };
-
       try {
-        response = await fetch(
-          `${API_BASE_URL}${normalizePath(path)}${buildQuery(options.params)}`,
-          {
-            method: options.method ?? "GET",
-            headers: retryHeaders,
-            body:
-              options.body !== undefined
-                ? JSON.stringify(options.body)
-                : undefined,
+        response = await fetch(url, {
+          method: options.method ?? "GET",
+          headers: {
+            ...headers,
+            Authorization: `Bearer ${newAccessToken}`,
           },
-        );
+          body:
+            options.body !== undefined
+              ? JSON.stringify(options.body)
+              : undefined,
+        });
       } catch {
         throw new ApiError(
-          "Could not reach the server. Check that the backend is running.",
+          "Could not reach the server. Check that the Django backend is running on port 8000.",
           0,
         );
       }
     } else {
-      // The refresh token is also invalid/expired, so the session
-      // can no longer be recovered automatically.
       clearToken();
 
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("peoplepay:session-expired"));
+        window.dispatchEvent(
+          new Event("peoplepay:session-expired"),
+        );
       }
 
       throw new ApiError(
@@ -220,14 +280,19 @@ export async function apiRequest<T>(
     throw new ApiError(detail, response.status);
   }
 
-  // DELETE requests commonly return HTTP 204 with no response body.
+  /*
+   * DELETE requests often return 204 with no body.
+   */
   if (response.status === 204) {
     return undefined as T;
   }
 
-  const contentType = response.headers.get("content-type") ?? "";
+  const contentType =
+    response.headers.get("content-type") ?? "";
 
-  // Some endpoints can return files instead of JSON.
+  /*
+   * File endpoints return blobs instead of JSON.
+   */
   if (!contentType.includes("application/json")) {
     return undefined as T;
   }
@@ -235,20 +300,29 @@ export async function apiRequest<T>(
   return (await response.json()) as T;
 }
 
-export async function apiDownload(path: string): Promise<Blob> {
+
+/**
+ * Download a file from an authenticated Django endpoint.
+ */
+export async function apiDownload(
+  path: string,
+): Promise<Blob> {
   const token = getToken();
 
-  const headers: Record<string, string> = {};
+  const url =
+    `${API_BASE_URL}${normalizePath(path)}`;
 
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  let response = await fetch(`${API_BASE_URL}${normalizePath(path)}`, {
-    headers,
+  let response = await fetch(url, {
+    headers: token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {},
   });
 
-  // Downloads can also encounter an expired access token.
+  /*
+   * Try the refresh token once when the access token expired.
+   */
   if (response.status === 401 && token) {
     const newAccessToken = await refreshAccessToken();
 
@@ -256,7 +330,9 @@ export async function apiDownload(path: string): Promise<Blob> {
       clearToken();
 
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new Event("peoplepay:session-expired"));
+        window.dispatchEvent(
+          new Event("peoplepay:session-expired"),
+        );
       }
 
       throw new ApiError(
@@ -265,7 +341,7 @@ export async function apiDownload(path: string): Promise<Blob> {
       );
     }
 
-    response = await fetch(`${API_BASE_URL}${normalizePath(path)}`, {
+    response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${newAccessToken}`,
       },
@@ -273,7 +349,12 @@ export async function apiDownload(path: string): Promise<Blob> {
   }
 
   if (!response.ok) {
-    throw new ApiError("Could not download file.", response.status);
+    const detail = await parseErrorResponse(
+      response,
+      "Could not download the requested file.",
+    );
+
+    throw new ApiError(detail, response.status);
   }
 
   return response.blob();

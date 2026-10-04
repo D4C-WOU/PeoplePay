@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import {
   ArrowRight,
   Check,
@@ -35,8 +36,11 @@ const FEATURES = [
   },
 ];
 
-// These are development/demo usernames from the seeded Django database.
-// Passwords are intentionally not stored in the frontend.
+/*
+ * These usernames come from the Django development accounts.
+ *
+ * Passwords are intentionally NOT stored in the frontend.
+ */
 const DEMO_ACCOUNTS = [
   {
     username: "neha",
@@ -54,6 +58,10 @@ const DEMO_ACCOUNTS = [
     username: "riya",
     label: "Employee",
   },
+  {
+    username: "dev",
+    label: "Employee",
+  },
 ];
 
 export default function LoginPage() {
@@ -64,10 +72,13 @@ export default function LoginPage() {
   const passwordId = useId();
 
   const [username, setUsername] = useState("neha");
+
   const [password, setPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
+
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -81,8 +92,9 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      // AuthContext owns the actual authentication flow.
-      // The login page only collects credentials and handles the result.
+      /*
+       * Send exactly the payload expected by Django SimpleJWT.
+       */
       await login({
         username: username.trim(),
         password,
@@ -90,7 +102,7 @@ export default function LoginPage() {
 
       router.replace("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Invalid credentials");
+      setError(err instanceof ApiError ? err.message : "Invalid credentials.");
     } finally {
       setLoading(false);
     }
@@ -153,6 +165,7 @@ export default function LoginPage() {
         <div className="login-form-wrap">
           <div className="login-mobile-brand">
             <div className="login-mobile-mark">P3</div>
+
             <span>PeoplePay360</span>
           </div>
 
@@ -227,6 +240,7 @@ export default function LoginPage() {
 
                 <div>
                   <strong>Sign in failed</strong>
+
                   <p>{error}</p>
                 </div>
               </div>

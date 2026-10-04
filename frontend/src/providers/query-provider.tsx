@@ -4,14 +4,19 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { apiRequest } from "@/lib/api";
+
 import { clearToken, getToken, setRefreshToken, setToken } from "@/lib/auth";
+
 import type { LoginPayload, TokenResponse, User } from "@/types/auth";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
+
   login: (payload: LoginPayload) => Promise<User>;
+
   logout: () => void;
+
   refresh: () => Promise<void>;
 }
 
@@ -24,13 +29,12 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   const [loading, setLoading] = React.useState(true);
 
+  /**
+   * Restore an existing login session when the application starts.
+   */
   const refresh = React.useCallback(async () => {
     const token = getToken();
 
-    /*
-     * If there is no access token, there is no existing session
-     * to restore.
-     */
     if (!token) {
       setUser(null);
       setLoading(false);
@@ -39,21 +43,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
     try {
       /*
-       * Ask Django for the current authenticated user instead of
-       * trusting information stored in the browser.
-       *
-       * The backend remains the source of truth for:
-       * - user identity
-       * - role
-       * - account status
+       * Django remains the source of truth for the current user.
        */
       const me = await apiRequest<User>("/auth/me/");
 
       setUser(me);
     } catch {
       /*
-       * If the existing session cannot be restored, remove the
-       * local authentication state.
+       * If the access token and refresh token are both invalid,
+       * remove the local session.
        */
       clearToken();
       setUser(null);
@@ -64,11 +62,10 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     /*
-     * Session restoration is an asynchronous operation.
+     * Delay session restoration until after the initial effect.
      *
-     * Scheduling it after the current effect finishes avoids the
-     * React 19 set-state-in-effect lint warning while preserving
-     * the same application behavior.
+     * This avoids unnecessary React 19 effect/lint warnings while
+     * keeping authentication initialization asynchronous.
      */
     const timer = window.setTimeout(() => {
       void refresh();
@@ -80,11 +77,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   React.useEffect(() => {
-    /*
-     * apiRequest() emits this event whenever the backend reports
-     * that the current authentication session is no longer valid.
-     *
-     * This listener keeps the UI synchronized with that event.
+    /**
+     * The API layer emits this event when a JWT session can no
+     * longer be recovered.
      */
     const handleSessionExpired = () => {
       setUser(null);
@@ -101,12 +96,14 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     };
   }, [router]);
 
+  /**
+   * Authenticate against Django SimpleJWT.
+   */
   const login = React.useCallback(async (payload: LoginPayload) => {
     /*
-     * Django SimpleJWT returns both:
+     * Django's default AbstractUser authentication uses:
      *
-     * access  -> short-lived token used for API requests
-     * refresh -> longer-lived token used to obtain a new access token
+     * username + password
      */
     const response = await apiRequest<TokenResponse>("/auth/login/", {
       method: "POST",
@@ -114,17 +111,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     });
 
     /*
-     * Store both tokens so the authentication layer has the
-     * information required for the current JWT session.
+     * Store both JWT tokens.
      */
     setToken(response.access);
     setRefreshToken(response.refresh);
 
     /*
-     * Fetch the authenticated user's actual backend profile.
+     * Fetch the actual authenticated user.
      *
-     * This prevents the frontend from having to infer the user's
-     * role from the login form or token payload.
+     * This gives us the backend-controlled role and profile.
      */
     const me = await apiRequest<User>("/auth/me/");
 
@@ -133,14 +128,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     return me;
   }, []);
 
+  /**
+   * End the browser's current JWT session.
+   */
   const logout = React.useCallback(() => {
-    /*
-     * JWT authentication is stateless on the backend.
-     *
-     * Removing the locally stored tokens ends this browser session.
-     */
     clearToken();
-
     setUser(null);
 
     router.replace("/login");
