@@ -100,7 +100,7 @@ function PayslipViewer({
                       {line.category.replaceAll("_", " ").toLowerCase()}
                     </TableCell>
                     <TableCell>
-                      {money(Number(line.amount), payslip.currency)}
+                      {money(Number(line.calculated_amount), payslip.currency)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -119,10 +119,6 @@ function PayslipViewer({
               <span>
                 {money(Number(payslip.deductions_amount), payslip.currency)}
               </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Tax</span>
-              <span>{money(Number(payslip.tax_amount), payslip.currency)}</span>
             </div>
             <div className="flex justify-between border-t pt-1 font-semibold">
               <span>Net pay</span>

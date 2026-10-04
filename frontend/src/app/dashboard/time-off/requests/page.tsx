@@ -192,16 +192,12 @@ export default function TimeOffRequestsPage() {
   };
   const typeName = (id: string) => types?.find((t) => t.id === id)?.name ?? id;
 
-  async function handleAction(
-    id: string,
-    action: "approve" | "reject" | "cancel",
-  ) {
+  async function handleAction(id: string, action: "approve" | "reject") {
     setRowBusy(id + action);
     setRowError(null);
     try {
       if (action === "approve") await timeOffApi.approve(id);
       if (action === "reject") await timeOffApi.reject(id);
-      if (action === "cancel") await timeOffApi.cancel(id);
       reload();
     } catch (err) {
       setRowError(
@@ -230,7 +226,6 @@ export default function TimeOffRequestsPage() {
               <SelectItem value="PENDING">Pending</SelectItem>
               <SelectItem value="APPROVED">Approved</SelectItem>
               <SelectItem value="REJECTED">Rejected</SelectItem>
-              <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -268,7 +263,7 @@ export default function TimeOffRequestsPage() {
                     <TableCell className="text-muted-foreground">
                       {r.start_date} → {r.end_date}
                     </TableCell>
-                    <TableCell>{r.requested_days}</TableCell>
+                    <TableCell>{r.duration_days}</TableCell>
                     <TableCell>
                       <StatusBadge status={r.status} />
                     </TableCell>
@@ -294,17 +289,6 @@ export default function TimeOffRequestsPage() {
                             <X />
                           </Button>
                         </div>
-                      )}
-                      {r.status === "APPROVED" && (
-                        <Button
-                          size="icon-sm"
-                          variant="outline"
-                          disabled={!!rowBusy}
-                          onClick={() => handleAction(r.id, "cancel")}
-                          title="Cancel"
-                        >
-                          <Ban />
-                        </Button>
                       )}
                     </TableCell>
                   </TableRow>

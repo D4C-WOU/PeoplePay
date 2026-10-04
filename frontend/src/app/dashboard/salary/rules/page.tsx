@@ -47,7 +47,7 @@ function NewRuleDialog({
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<SalaryRuleCategory>("EARNING");
+  const [category, setCategory] = useState<SalaryRuleCategory>("BASIC");
   const [calcType, setCalcType] = useState<CalculationType>("FIXED");
   const [amount, setAmount] = useState("");
   const [percentage, setPercentage] = useState("");
@@ -71,7 +71,6 @@ function NewRuleDialog({
         percentage: calcType === "PERCENTAGE" ? Number(percentage) : undefined,
         formula: calcType === "FORMULA" ? formula : undefined,
         sequence: Number(sequence),
-        is_active: true,
       });
       setOpen(false);
       setCode("");
@@ -143,12 +142,11 @@ function NewRuleDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="EARNING">Earning</SelectItem>
+                  <SelectItem value="BASIC">Basic</SelectItem>
+                  <SelectItem value="ALLOWANCE">Allowance</SelectItem>
+                  <SelectItem value="GROSS">Gross</SelectItem>
                   <SelectItem value="DEDUCTION">Deduction</SelectItem>
-                  <SelectItem value="TAX">Tax</SelectItem>
-                  <SelectItem value="EMPLOYER_CONTRIBUTION">
-                    Employer contribution
-                  </SelectItem>
+                  <SelectItem value="NET">Net</SelectItem>
                 </SelectContent>
               </Select>
             </div>

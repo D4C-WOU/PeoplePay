@@ -96,6 +96,7 @@ function NewPayrunWizard({ onCreated }: { onCreated: () => void }) {
     setError(null);
     try {
       await payrunApi.create({
+        name: `${periodStart} to ${periodEnd} Payroll`,
         period_start: periodStart,
         period_end: periodEnd,
         payment_date: paymentDate || undefined,
@@ -316,8 +317,8 @@ export default function PayrunsPage() {
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
                 <SelectItem value="DRAFT">Draft</SelectItem>
-                <SelectItem value="PROCESSING">Processing</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
+                <SelectItem value="COMPUTED">Computed</SelectItem>
+                <SelectItem value="VALIDATED">Validated</SelectItem>
                 <SelectItem value="PAID">Paid</SelectItem>
                 <SelectItem value="CANCELLED">Cancelled</SelectItem>
               </SelectContent>
@@ -364,7 +365,7 @@ export default function PayrunsPage() {
             {
               key: "net",
               header: "Net",
-              render: (run) => money(Number(run.total_net)),
+              render: (run) => money(Number(run.net_total)),
             },
             {
               key: "status",

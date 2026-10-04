@@ -5,8 +5,9 @@ import {
   setToken,
 } from "@/lib/auth";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+export const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api"
+).replace(/\/+$/, "");
 
 export class ApiError extends Error {
   status: number;
@@ -22,6 +23,14 @@ type RequestOptions = {
   body?: unknown;
   params?: Record<string, string | number | boolean | undefined | null>;
 };
+
+function normalizePath(path: string): string {
+  if (!path || path.endsWith("/")) {
+    return path;
+  }
+
+  return `${path}/`;
+}
 
 function buildQuery(params?: RequestOptions["params"]): string {
   if (!params) {
@@ -140,7 +149,7 @@ export async function apiRequest<T>(
 
   try {
     response = await fetch(
-      `${API_BASE_URL}${path}${buildQuery(options.params)}`,
+      `${API_BASE_URL}${normalizePath(path)}${buildQuery(options.params)}`,
       {
         method: options.method ?? "GET",
         headers,
@@ -170,7 +179,7 @@ export async function apiRequest<T>(
 
       try {
         response = await fetch(
-          `${API_BASE_URL}${path}${buildQuery(options.params)}`,
+          `${API_BASE_URL}${normalizePath(path)}${buildQuery(options.params)}`,
           {
             method: options.method ?? "GET",
             headers: retryHeaders,
@@ -235,7 +244,7 @@ export async function apiDownload(path: string): Promise<Blob> {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  let response = await fetch(`${API_BASE_URL}${path}`, {
+  let response = await fetch(`${API_BASE_URL}${normalizePath(path)}`, {
     headers,
   });
 
@@ -256,7 +265,7 @@ export async function apiDownload(path: string): Promise<Blob> {
       );
     }
 
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(`${API_BASE_URL}${normalizePath(path)}`, {
       headers: {
         Authorization: `Bearer ${newAccessToken}`,
       },

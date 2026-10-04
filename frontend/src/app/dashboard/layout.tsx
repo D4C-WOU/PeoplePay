@@ -20,7 +20,6 @@ import {
   canAccessHR,
   canAccessPayroll,
   canAccessSalary,
-  canAccessTimeAttendance,
 } from "@/lib/auth";
 import { NAV_ITEMS } from "@/lib/navigation";
 
@@ -120,15 +119,46 @@ export default function DashboardLayout({
   // The sidebar hides restricted sections, but this check also protects
   // direct URL navigation such as manually entering /dashboard/payroll.
   useEffect(() => {
-    const restrictedForTimeAttendance =
+    if (loading || !user) return;
+
+    const isEmployee = user.role === "EMPLOYEE";
+    const isHRPage =
+      pathname.startsWith("/dashboard/employees") ||
+      pathname.startsWith("/dashboard/contracts") ||
+      pathname.startsWith("/dashboard/departments") ||
       pathname.startsWith("/dashboard/attendance") ||
       pathname.startsWith("/dashboard/time-off") ||
       pathname.startsWith("/dashboard/work-schedules");
+    const isPayrollPage = pathname.startsWith("/dashboard/payroll");
+    const isSalaryPage = pathname.startsWith("/dashboard/salary");
+    const isAdminPage =
+      pathname.startsWith("/dashboard/settings") ||
+      pathname.startsWith("/dashboard/users");
 
-    if (restrictedForTimeAttendance && !canAccessTimeAttendance(user?.role)) {
+    if (isEmployee && (isHRPage || isPayrollPage || isSalaryPage || isAdminPage)) {
+      router.replace("/dashboard");
+      return;
+    }
+
+    if (isPayrollPage && !canAccessPayroll(user.role)) {
+      router.replace("/dashboard");
+      return;
+    }
+
+    if (isSalaryPage && !canAccessSalary(user.role)) {
+      router.replace("/dashboard");
+      return;
+    }
+
+    if (isAdminPage && user.role !== "ADMIN" && user.role !== "HR_MANAGER") {
+      router.replace("/dashboard");
+      return;
+    }
+
+    if (isHRPage && !canAccessHR(user.role) && user.role !== "HR_PAYROLL_MANAGER" && user.role !== "HR_PAYROLL_USER") {
       router.replace("/dashboard");
     }
-  }, [pathname, router, user?.role]);
+  }, [loading, pathname, router, user]);
 
   // Navigation is derived from the authenticated user's role.
   // The backend remains the real security boundary; this only keeps
@@ -177,12 +207,13 @@ export default function DashboardLayout({
           item.group === "People" &&
           ["/dashboard/attendance", "/dashboard/time-off"].includes(item.href)
         ) {
-          return canAccessTimeAttendance(user?.role);
+          return (
+            canAccessHR(user?.role) ||
+            user?.role === "HR_PAYROLL_MANAGER" ||
+            user?.role === "HR_PAYROLL_USER"
+          );
         }
 
-        if (item.href === "/dashboard/reports") {
-          return user?.role !== "EMPLOYEE";
-        }
 
         return true;
       }),

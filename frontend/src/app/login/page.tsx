@@ -35,23 +35,35 @@ const FEATURES = [
   },
 ];
 
-// These are only demo email presets.
-// The password is intentionally not stored in the frontend.
+// These are development/demo usernames from the seeded Django database.
+// Passwords are intentionally not stored in the frontend.
 const DEMO_ACCOUNTS = [
-  "admin@peoplepay.com",
-  "hr@peoplepay.com",
-  "payroll.manager@peoplepay.com",
-  "employee@peoplepay.com",
+  {
+    username: "neha",
+    label: "HR Manager",
+  },
+  {
+    username: "karan",
+    label: "HR Payroll Manager",
+  },
+  {
+    username: "aarav",
+    label: "Employee",
+  },
+  {
+    username: "riya",
+    label: "Employee",
+  },
 ];
 
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
 
-  const emailId = useId();
+  const usernameId = useId();
   const passwordId = useId();
 
-  const [email, setEmail] = useState("admin@peoplepay.com");
+  const [username, setUsername] = useState("neha");
   const [password, setPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
@@ -72,7 +84,7 @@ export default function LoginPage() {
       // AuthContext owns the actual authentication flow.
       // The login page only collects credentials and handles the result.
       await login({
-        email: email.trim(),
+        username: username.trim(),
         password,
       });
 
@@ -157,20 +169,19 @@ export default function LoginPage() {
 
           <form className="login-form" onSubmit={handleSubmit} noValidate>
             <div className="login-field">
-              <label htmlFor={emailId}>Work email</label>
+              <label htmlFor={usernameId}>Username</label>
 
               <input
-                id={emailId}
-                name="email"
-                type="email"
-                inputMode="email"
+                id={usernameId}
+                name="username"
+                type="text"
                 autoComplete="username"
                 autoCapitalize="none"
                 spellCheck={false}
                 required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@company.com"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="Enter your username"
                 disabled={loading}
                 aria-invalid={Boolean(error)}
                 className="login-input"
@@ -242,7 +253,7 @@ export default function LoginPage() {
                 <p className="login-demo-title">Quick demo access</p>
 
                 <p className="login-demo-subtitle">
-                  Pick a role to prefill the email address.
+                  Pick a role to prefill the username.
                 </p>
               </div>
 
@@ -251,17 +262,17 @@ export default function LoginPage() {
 
             <div className="login-demo-list">
               {DEMO_ACCOUNTS.map((account) => {
-                const active = email === account;
+                const active = username === account.username;
 
                 return (
                   <button
-                    key={account}
+                    key={account.username}
                     type="button"
                     className={`login-demo-account${
                       active ? " is-active" : ""
                     }`}
                     onClick={() => {
-                      setEmail(account);
+                      setUsername(account.username);
                       setError(null);
                     }}
                     disabled={loading}
@@ -270,14 +281,16 @@ export default function LoginPage() {
                       {active && <Check size={13} strokeWidth={2.5} />}
                     </span>
 
-                    <span>{account}</span>
+                    <span>
+                      {account.username} — {account.label}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
             <p className="login-demo-note">
-              Demo passwords end with <strong>@123</strong>.
+              Development demo accounts use the seeded backend credentials.
             </p>
           </div>
 

@@ -30,8 +30,10 @@ function NewTypeDialog({ onCreated }: { onCreated: () => void }) {
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [defaultAllocation, setDefaultAllocation] = useState("0");
-  const [isPaid, setIsPaid] = useState(true);
+  const [unit, setUnit] = useState("DAYS");
+  const [requiresAllocation, setRequiresAllocation] = useState(true);
+  const [requiresApproval, setRequiresApproval] = useState(true);
+  const [affectsPayroll, setAffectsPayroll] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -44,8 +46,10 @@ function NewTypeDialog({ onCreated }: { onCreated: () => void }) {
         code,
         name,
         description: description || undefined,
-        default_allocation: Number(defaultAllocation),
-        is_paid: isPaid,
+        unit,
+        requires_allocation: requiresAllocation,
+        requires_approval: requiresApproval,
+        affects_payroll: affectsPayroll,
         is_active: true,
       });
       setOpen(false);
@@ -86,13 +90,13 @@ function NewTypeDialog({ onCreated }: { onCreated: () => void }) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="allocation">Default allocation (days)</Label>
+              <Label htmlFor="unit">Unit</Label>
               <Input
-                id="allocation"
-                type="number"
-                min={0}
-                value={defaultAllocation}
-                onChange={(e) => setDefaultAllocation(e.target.value)}
+                id="unit"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value.toUpperCase())}
+                placeholder="DAYS"
+                required
               />
             </div>
           </div>
@@ -116,8 +120,8 @@ function NewTypeDialog({ onCreated }: { onCreated: () => void }) {
           </div>
           <label className="flex items-center gap-2 text-sm">
             <Checkbox
-              checked={isPaid}
-              onCheckedChange={(v) => setIsPaid(!!v)}
+              checked={affectsPayroll}
+              onCheckedChange={(v) => setAffectsPayroll(Boolean(v))}
             />
             Paid leave
           </label>
@@ -204,15 +208,15 @@ export default function TimeOffPage() {
             },
             {
               key: "allocation",
-              header: "Default allocation",
-              render: (type) => `${type.default_allocation} days`,
+              header: "Unit",
+              render: (type) => type.unit,
             },
             {
               key: "paid",
-              header: "Paid",
+              header: "Payroll impact",
               render: (type) => (
-                <Badge variant={type.is_paid ? "default" : "secondary"}>
-                  {type.is_paid ? "Paid" : "Unpaid"}
+                <Badge variant={type.affects_payroll ? "default" : "secondary"}>
+                  {type.affects_payroll ? "Affects payroll" : "No payroll impact"}
                 </Badge>
               ),
             },

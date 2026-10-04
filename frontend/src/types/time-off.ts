@@ -5,24 +5,34 @@ export interface TimeOffType {
   code: string;
   name: string;
   description?: string | null;
-  default_allocation: number;
-  is_paid: boolean;
+  unit: string;
+  requires_allocation: boolean;
+  requires_approval: boolean;
+  affects_payroll: boolean;
   is_active: boolean;
 }
 
 export interface TimeOffAllocation {
   id: string;
   employee_id: string;
+  employee_name?: string;
   time_off_type_id: string;
-  year: number;
+  time_off_type_name?: string;
+  year?: number;
   allocated_days: number;
   used_days: number;
+  remaining_days?: number;
+  valid_from?: string | null;
+  valid_to?: string | null;
+  status?: string;
 }
 
 export interface TimeOffRequest {
   id: string;
   employee_id: string;
+  employee_name?: string;
   time_off_type_id: string;
+  time_off_type_name?: string;
   start_date: string;
   end_date: string;
   requested_days: number;
@@ -30,4 +40,5 @@ export interface TimeOffRequest {
   status: TimeOffStatus;
   reviewed_by?: string | null;
   reviewed_at?: string | null;
+  created_at?: string;
 }

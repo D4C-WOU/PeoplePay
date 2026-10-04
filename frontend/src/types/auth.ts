@@ -1,21 +1,24 @@
 import type { UserRole } from "@/lib/auth";
 
+/** User account returned by Django's /auth/me/ endpoint. */
 export interface User {
   id: number;
   username: string;
   email: string;
+  first_name: string;
+  last_name: string;
   role: UserRole;
-  is_active: boolean;
+  /** CurrentUserSerializer does not expose account status, so undefined means active. */
+  is_active?: boolean;
 }
 
+/** Django's default AbstractUser authentication uses username + password. */
 export interface LoginPayload {
-  email: string;
+  username: string;
   password: string;
 }
 
-// Django SimpleJWT returns "access" and "refresh".
-// The previous frontend expected "access_token", which belonged
-// to the previous authentication contract.
+/** SimpleJWT returns these two tokens. */
 export interface TokenResponse {
   access: string;
   refresh: string;

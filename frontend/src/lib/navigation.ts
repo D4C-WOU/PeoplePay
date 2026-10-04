@@ -26,7 +26,6 @@ export type NavigationItem = {
 
 export const NAV_ITEMS: readonly NavigationItem[] = [
   { group: "Analytics", label: "Dashboard", href: "/dashboard", icon: LayoutGrid, exact: true },
-  { group: "Analytics", label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
 
   { group: "People", label: "Employees", href: "/dashboard/employees", icon: Users2 },
   { group: "People", label: "Attendance", href: "/dashboard/attendance", icon: Clock4 },

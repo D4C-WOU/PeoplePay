@@ -94,7 +94,7 @@ export default function PayrollOverviewPage() {
                     Total gross
                   </p>
                   <p className="mt-3 text-xl font-semibold text-slate-900">
-                    {money(Number(latest.total_gross))}
+                    {money(Number(latest.gross_total))}
                   </p>
                 </div>
                 <div className="p-5 lg:p-6">
@@ -103,16 +103,16 @@ export default function PayrollOverviewPage() {
                     Deductions
                   </p>
                   <p className="mt-3 text-xl font-semibold text-slate-900">
-                    {money(Number(latest.total_deductions))}
+                    {money(Number(latest.deduction_total))}
                   </p>
                 </div>
                 <div className="p-5 lg:p-6">
                   <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    <Calculator className="size-4 text-(--pp-brand)" /> Total
-                    tax
+                    <Calculator className="size-4 text-(--pp-brand)" /> Salary
+                    structure
                   </p>
                   <p className="mt-3 text-xl font-semibold text-slate-900">
-                    {money(Number(latest.total_tax))}
+                    {latest.salary_structure_name ?? "—"}
                   </p>
                 </div>
                 <div className="col-span-2 bg-(--pp-brand-light) p-5 lg:col-span-1 lg:p-6">
@@ -120,7 +120,7 @@ export default function PayrollOverviewPage() {
                     <CircleDollarSign className="size-4" /> Estimated net pay
                   </p>
                   <p className="mt-3 text-xl font-semibold text-(--pp-brand-dark)">
-                    {money(Number(latest.total_net))}
+                    {money(Number(latest.net_total))}
                   </p>
                 </div>
               </CardContent>
@@ -238,7 +238,7 @@ export default function PayrollOverviewPage() {
                           Net payroll
                         </span>
                         <span className="font-medium text-slate-900 sm:block">
-                          {money(Number(run.total_net))}
+                          {money(Number(run.net_total))}
                         </span>
                       </div>
                       <div className="sm:justify-self-end">
